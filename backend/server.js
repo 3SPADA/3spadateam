@@ -9,8 +9,19 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'ganti-secret-ini-di-file-.env';
 
-app.use(cors());
+// CORS_ORIGIN bisa diisi satu atau beberapa domain dipisah koma, contoh:
+// CORS_ORIGIN=https://3spadateam.github.io,http://localhost:5500
+// Kalau kosong (belum diset), semua origin diizinkan dulu supaya gampang waktu setup awal.
+const allowedOrigins = (process.env.CORS_ORIGIN || '').split(',').map(o => o.trim()).filter(Boolean);
+app.use(cors({
+  origin: allowedOrigins.length ? allowedOrigins : true
+}));
 app.use(express.json());
+
+// Health check sederhana, dipakai Railway untuk cek servicenya hidup
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', service: '3spada-backend' });
+});
 
 // ---------- MIDDLEWARE AUTH ----------
 function authRequired(req, res, next) {

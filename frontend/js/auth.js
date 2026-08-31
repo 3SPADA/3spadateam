@@ -1,5 +1,4 @@
-// Ganti sesuai alamat backend kalian saat deploy (lihat backend/README)
-const API_BASE = 'http://localhost:4000/api';
+// API_BASE sekarang didefinisikan di js/config.js (dimuat sebelum file ini)
 
 function saveToken(token){ localStorage.setItem('3spada_token', token); }
 function getToken(){ return localStorage.getItem('3spada_token'); }
