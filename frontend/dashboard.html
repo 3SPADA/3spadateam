@@ -52,8 +52,15 @@
         </div>
 
         <div class="dash-card">
-          <h3>Ringkasan</h3>
-          <p style="font-size:14px;">Statistik di bawah diambil dari data yang diinput coach/staf setelah setiap pertandingan resmi.</p>
+          <h3>Riwayat Absensi</h3>
+          <table class="stat-table">
+            <thead>
+              <tr><th>Tanggal</th><th>Status</th></tr>
+            </thead>
+            <tbody id="attendance-body">
+              <tr><td colspan="2" style="color:var(--muted)">Memuat...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 

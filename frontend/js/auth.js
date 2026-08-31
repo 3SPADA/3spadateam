@@ -95,6 +95,8 @@ if (dashRoot) {
       document.getElementById('btn-hadir').addEventListener('click', () => submitAttendance('hadir', today, authHeaders));
       document.getElementById('btn-izin').addEventListener('click', () => submitAttendance('izin', today, authHeaders));
 
+      await loadAttendanceHistory(authHeaders);
+
       // Riwayat statistik
       const statsRes = await fetch(API_BASE + '/stats/me', { headers: authHeaders });
       const stats = await statsRes.json();
@@ -131,7 +133,29 @@ async function submitAttendance(status, date, authHeaders) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Gagal absen');
     showMsg(msg, 'Absen tercatat: ' + status.toUpperCase(), 'success');
+    await loadAttendanceHistory(authHeaders);
   } catch (err) {
     showMsg(msg, err.message, 'error');
+  }
+}
+
+async function loadAttendanceHistory(authHeaders) {
+  const tbody = document.getElementById('attendance-body');
+  if (!tbody) return;
+  try {
+    const res = await fetch(API_BASE + '/attendance/me', { headers: authHeaders });
+    const rows = await res.json();
+    if (!res.ok) throw new Error(rows.error || 'Gagal memuat riwayat absen');
+
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="2" style="color:var(--muted)">Belum ada riwayat absen.</td></tr>';
+      return;
+    }
+    const labelMap = { hadir: 'Hadir', izin: 'Izin', alpha: 'Alpha' };
+    tbody.innerHTML = rows.map(r =>
+      `<tr><td>${r.session_date}</td><td>${labelMap[r.status] || r.status}</td></tr>`
+    ).join('');
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="2" style="color:var(--loss)">Gagal memuat data.</td></tr>';
   }
 }
