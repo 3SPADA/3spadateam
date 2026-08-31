@@ -1,0 +1,4 @@
+node_modules/
+backend/3spada.db
+backend/.env
+.DS_Store

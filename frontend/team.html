@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team — 3SPADA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <div class="navbar">
+    <a class="brand" href="home.html">
+      <svg class="brand-mark" viewBox="0 0 40 40" fill="none">
+        <path d="M20 3 L34 18 C38 22 36 30 28 31 C25 31.4 22.5 30 21 28 L21 34 L25 34 L25 37 L15 37 L15 34 L19 34 L19 28 C17.5 30 15 31.4 12 31 C4 30 2 22 6 18 Z" fill="#ff2e4d"/>
+      </svg>
+      <span class="brand-name">3<span>SPADA</span></span>
+    </a>
+    <nav class="menu" id="menu">
+      <a href="home.html">Home</a>
+      <a href="team.html" class="active">Team</a>
+      <a href="about.html">About Us</a>
+      <a href="login.html" class="cta-link">Login</a>
+    </nav>
+    <button class="burger" id="burger" aria-label="Buka menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<section class="section" style="padding-top:56px;">
+  <div class="wrap">
+    <div class="section-head">
+      <div><div class="section-num">Roster</div><h2>Player &amp; Staff</h2></div>
+      <p>Delapan orang, satu voice channel, satu tujuan: naik divisi musim depan.</p>
+    </div>
+
+    <div class="team-tabs">
+      <button class="team-tab active" data-group="players">Player</button>
+      <button class="team-tab" data-group="staff">Staff</button>
+    </div>
+
+    <div class="roster-group active" id="roster-players">
+      <div class="player-card"><div class="player-photo" style="background:#ff2e4d;">RZ</div><div class="player-info"><div class="player-role">EXP LANER</div><div class="player-name">Rizky</div><div class="player-tag">@rzky.exp</div></div></div>
+      <div class="player-card"><div class="player-photo" style="background:#4a5568;">KZ</div><div class="player-info"><div class="player-role">JUNGLER</div><div class="player-name">Kenzo</div><div class="player-tag">@kenzojgl</div></div></div>
+      <div class="player-card"><div class="player-photo" style="background:#33c17a;">AL</div><div class="player-info"><div class="player-role">MID LANER</div><div class="player-name">Alif</div><div class="player-tag">@alif.mid</div></div></div>
+      <div class="player-card"><div class="player-photo" style="background:#c9a227;">DF</div><div class="player-info"><div class="player-role">GOLD LANER</div><div class="player-name">Dafa</div><div class="player-tag">@dafagold</div></div></div>
+      <div class="player-card"><div class="player-photo" style="background:#6c7686;">BG</div><div class="player-info"><div class="player-role">ROAMER</div><div class="player-name">Bagas</div><div class="player-tag">@bagasroam</div></div></div>
+    </div>
+
+    <div class="roster-group" id="roster-staff">
+      <div class="player-card"><div class="player-photo" style="background:#ff2e4d;">WR</div><div class="player-info"><div class="player-role">HEAD COACH</div><div class="player-name">Wira</div><div class="player-tag">@coachwira</div></div></div>
+      <div class="player-card"><div class="player-photo" style="background:#4a5568;">SN</div><div class="player-info"><div class="player-role">TEAM MANAGER</div><div class="player-name">Siti Nur</div><div class="player-tag">@sitinur.mgr</div></div></div>
+      <div class="player-card"><div class="player-photo" style="background:#33c17a;">FD</div><div class="player-info"><div class="player-role">ANALYST</div><div class="player-name">Fadel</div><div class="player-tag">@fadelanalyze</div></div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <p>&copy; 2026 3SPADA Esport Community. Sambas, Kalimantan Barat.</p>
+    <p>Dibuat untuk komunitas, oleh komunitas.</p>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
