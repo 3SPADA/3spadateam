@@ -87,7 +87,20 @@ Kalau backend dan frontend jalan di alamat berbeda saat sudah online nanti, ubah
 3. Frontend-nya sendiri (file HTML statis) bisa di-hosting terpisah — misalnya GitHub Pages, Netlify, Vercel, atau sebagai service kedua di Railway juga. Bilang aja kalau mau dibantu setup salah satunya.
 4. Setelah frontend live, masukkan alamat frontend itu ke env `CORS_ORIGIN` di Railway backend (poin 3 di bagian Backend), supaya browser tidak memblokir requestnya.
 
-## 5. Yang masih perlu dibereskan sebelum dipakai publik
+## 5. Deploy frontend ke GitHub Pages
+
+Repo ini sudah dilengkapi workflow otomatis di `.github/workflows/deploy-pages.yml` yang men-deploy isi folder `frontend/` ke GitHub Pages setiap kali ada push ke branch `main`.
+
+1. Pastikan `frontend/js/config.js` sudah diisi URL backend Railway kamu (lihat bagian 4 di atas), lalu commit & push.
+2. Di GitHub, buka repo `3spadateam` → **Settings** → **Pages** (di sidebar kiri, grup "Code and automation").
+3. Di bagian **Build and deployment**, ubah **Source** jadi **"GitHub Actions"** (bukan "Deploy from a branch").
+4. Push apa saja ke `main` (atau buka tab **Actions** di repo, pilih workflow "Deploy frontend to GitHub Pages", klik **Run workflow** untuk trigger manual pertama kali).
+5. Tunggu workflow selesai (tanda centang hijau di tab Actions), lalu buka lagi **Settings → Pages** — di situ akan muncul URL publiknya, formatnya seperti: `https://USERNAME-KAMU.github.io/3spadateam/`.
+6. Update env `CORS_ORIGIN` di Railway dengan URL itu (tanpa garis miring di akhir), supaya backend mengizinkan request dari domain ini.
+
+Catatan: alamat pembuka (`/`) otomatis mengarahkan ke `home.html` lewat `frontend/index.html`.
+
+## 6. Yang masih perlu dibereskan sebelum dipakai publik
 
 Ini starter yang sudah jalan dan sudah saya test end-to-end, tapi belum "production-ready":
 
@@ -96,7 +109,7 @@ Ini starter yang sudah jalan dan sudah saya test end-to-end, tapi belum "product
 - Belum ada halaman admin untuk lihat rekap absen semua orang (API-nya sudah ada: `GET /api/attendance/all`, tinggal dibuatkan tampilannya).
 - Belum ada validasi lanjutan (rate limiting, reset password, dsb).
 
-## 6. Daftar endpoint API
+## 7. Daftar endpoint API
 
 | Method | Endpoint | Akses | Keterangan |
 |---|---|---|---|
