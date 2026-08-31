@@ -103,11 +103,11 @@ if (dashRoot) {
       const tbody = document.getElementById('stats-body');
       tbody.innerHTML = '';
       if (stats.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">Belum ada data statistik.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">Belum ada data statistik.</td></tr>';
       } else {
         stats.forEach(s => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${s.match_date}</td><td>${s.opponent}</td><td>${s.result === 'menang' ? 'Menang' : 'Kalah'}</td><td>${s.kills}/${s.deaths}/${s.assists}</td><td>${s.is_mvp ? 'MVP' : '-'}</td>`;
+          tr.innerHTML = `<td>${s.match_date}</td><td>${s.opponent}</td><td>${s.result === 'menang' ? 'Menang' : 'Kalah'}</td><td>${s.goals}</td><td>${s.assists}</td><td>${s.passes}</td><td>${Number(s.rating).toFixed(1)}</td>`;
           tbody.appendChild(tr);
         });
       }

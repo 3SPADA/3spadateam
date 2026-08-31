@@ -153,7 +153,7 @@ app.get('/api/attendance/all', authRequired, staffOnly, (req, res) => {
 // Player melihat statistik miliknya sendiri
 app.get('/api/stats/me', authRequired, (req, res) => {
   const rows = db.prepare(`
-    SELECT match_date, opponent, result, kills, deaths, assists, is_mvp
+    SELECT match_date, opponent, result, goals, assists, passes, rating
     FROM match_stats WHERE user_id = ? ORDER BY match_date DESC
   `).all(req.user.id);
   res.json(rows);
@@ -162,7 +162,7 @@ app.get('/api/stats/me', authRequired, (req, res) => {
 // Staf melihat semua statistik yang sudah pernah diinput (untuk halaman input)
 app.get('/api/stats/all', authRequired, staffOnly, (req, res) => {
   const rows = db.prepare(`
-    SELECT ms.id, ms.user_id, ms.match_date, ms.opponent, ms.result, ms.kills, ms.deaths, ms.assists, ms.is_mvp,
+    SELECT ms.id, ms.user_id, ms.match_date, ms.opponent, ms.result, ms.goals, ms.assists, ms.passes, ms.rating,
            u.full_name, u.ign
     FROM match_stats ms JOIN users u ON u.id = ms.user_id
     ORDER BY ms.match_date DESC, ms.id DESC LIMIT 100
@@ -172,7 +172,7 @@ app.get('/api/stats/all', authRequired, staffOnly, (req, res) => {
 
 // Staf/coach menambahkan statistik untuk seorang player setelah match
 app.post('/api/stats', authRequired, staffOnly, (req, res) => {
-  const { user_id, match_date, opponent, result, kills, deaths, assists, is_mvp } = req.body || {};
+  const { user_id, match_date, opponent, result, goals, assists, passes, rating } = req.body || {};
   if (!user_id || !match_date || !opponent || !result) {
     return res.status(400).json({ error: 'Data pertandingan belum lengkap' });
   }
@@ -181,9 +181,9 @@ app.post('/api/stats', authRequired, staffOnly, (req, res) => {
   }
 
   const info = db.prepare(`
-    INSERT INTO match_stats (user_id, match_date, opponent, result, kills, deaths, assists, is_mvp)
+    INSERT INTO match_stats (user_id, match_date, opponent, result, goals, assists, passes, rating)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(user_id, match_date, opponent, result, kills || 0, deaths || 0, assists || 0, is_mvp ? 1 : 0);
+  `).run(user_id, match_date, opponent, result, goals || 0, assists || 0, passes || 0, rating || 0);
 
   res.status(201).json({ id: info.lastInsertRowid, message: 'Statistik tersimpan' });
 });
@@ -191,7 +191,7 @@ app.post('/api/stats', authRequired, staffOnly, (req, res) => {
 // Staf mengedit statistik yang sudah pernah diinput (misal salah ketik)
 app.put('/api/stats/:id', authRequired, staffOnly, (req, res) => {
   const { id } = req.params;
-  const { user_id, match_date, opponent, result, kills, deaths, assists, is_mvp } = req.body || {};
+  const { user_id, match_date, opponent, result, goals, assists, passes, rating } = req.body || {};
 
   const existing = db.prepare('SELECT id FROM match_stats WHERE id = ?').get(id);
   if (!existing) return res.status(404).json({ error: 'Data statistik tidak ditemukan' });
@@ -205,9 +205,9 @@ app.put('/api/stats/:id', authRequired, staffOnly, (req, res) => {
 
   db.prepare(`
     UPDATE match_stats
-    SET user_id = ?, match_date = ?, opponent = ?, result = ?, kills = ?, deaths = ?, assists = ?, is_mvp = ?
+    SET user_id = ?, match_date = ?, opponent = ?, result = ?, goals = ?, assists = ?, passes = ?, rating = ?
     WHERE id = ?
-  `).run(user_id, match_date, opponent, result, kills || 0, deaths || 0, assists || 0, is_mvp ? 1 : 0, id);
+  `).run(user_id, match_date, opponent, result, goals || 0, assists || 0, passes || 0, rating || 0, id);
 
   res.json({ message: 'Statistik diperbarui' });
 });

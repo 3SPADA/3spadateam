@@ -61,10 +61,10 @@ async function handleFormSubmit(e) {
     match_date: document.getElementById('stat-date').value,
     opponent: document.getElementById('stat-opponent').value.trim(),
     result: document.getElementById('stat-result').value,
-    kills: Number(document.getElementById('stat-kills').value) || 0,
-    deaths: Number(document.getElementById('stat-deaths').value) || 0,
+    goals: Number(document.getElementById('stat-goals').value) || 0,
     assists: Number(document.getElementById('stat-assists').value) || 0,
-    is_mvp: document.getElementById('stat-mvp').checked
+    passes: Number(document.getElementById('stat-passes').value) || 0,
+    rating: Number(document.getElementById('stat-rating').value) || 0
   };
 
   const isEdit = !!editId;
@@ -94,10 +94,10 @@ function enterEditMode(row) {
   document.getElementById('stat-date').value = row.match_date;
   document.getElementById('stat-opponent').value = row.opponent;
   document.getElementById('stat-result').value = row.result;
-  document.getElementById('stat-kills').value = row.kills;
-  document.getElementById('stat-deaths').value = row.deaths;
+  document.getElementById('stat-goals').value = row.goals;
   document.getElementById('stat-assists').value = row.assists;
-  document.getElementById('stat-mvp').checked = !!row.is_mvp;
+  document.getElementById('stat-passes').value = row.passes;
+  document.getElementById('stat-rating').value = row.rating;
 
   document.getElementById('form-mode-title').textContent = 'Edit Statistik';
   document.getElementById('stats-submit-btn').textContent = 'Simpan Perubahan';
@@ -143,7 +143,7 @@ async function loadAllStats() {
     _statsCache = rows;
 
     if (rows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">Belum ada data.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="color:var(--muted)">Belum ada data.</td></tr>';
       return;
     }
     tbody.innerHTML = rows.map(r => `
@@ -152,8 +152,10 @@ async function loadAllStats() {
         <td>${r.full_name}</td>
         <td>${r.opponent}</td>
         <td>${r.result === 'menang' ? 'Menang' : 'Kalah'}</td>
-        <td>${r.kills}/${r.deaths}/${r.assists}</td>
-        <td>${r.is_mvp ? 'MVP' : '-'}</td>
+        <td>${r.goals}</td>
+        <td>${r.assists}</td>
+        <td>${r.passes}</td>
+        <td>${Number(r.rating).toFixed(1)}</td>
         <td>
           <button type="button" class="row-action edit" data-id="${r.id}">Edit</button>
           <button type="button" class="row-action delete" data-id="${r.id}">Hapus</button>
@@ -171,6 +173,6 @@ async function loadAllStats() {
       btn.addEventListener('click', () => handleDelete(btn.dataset.id));
     });
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--loss)">Gagal memuat data.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="color:var(--loss)">Gagal memuat data.</td></tr>';
   }
 }

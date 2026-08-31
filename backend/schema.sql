@@ -29,10 +29,10 @@ CREATE TABLE IF NOT EXISTS match_stats (
   match_date TEXT NOT NULL,
   opponent TEXT NOT NULL,
   result TEXT NOT NULL CHECK(result IN ('menang','kalah')),
-  kills INTEGER DEFAULT 0,
-  deaths INTEGER DEFAULT 0,
+  goals INTEGER DEFAULT 0,
   assists INTEGER DEFAULT 0,
-  is_mvp INTEGER DEFAULT 0,            -- 0 = bukan, 1 = MVP
+  passes INTEGER DEFAULT 0,            -- jumlah umpan
+  rating REAL DEFAULT 0,               -- rating pertandingan, contoh: 7.5
   created_at TEXT DEFAULT (datetime('now'))
 );
 

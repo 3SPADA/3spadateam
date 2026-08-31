@@ -93,22 +93,23 @@
 
           <div class="stats-form-grid">
             <div class="field">
-              <label for="stat-kills">Kills</label>
-              <input type="number" id="stat-kills" min="0" value="0">
+              <label for="stat-goals">Goal</label>
+              <input type="number" id="stat-goals" min="0" value="0">
             </div>
             <div class="field">
-              <label for="stat-deaths">Deaths</label>
-              <input type="number" id="stat-deaths" min="0" value="0">
+              <label for="stat-assists">Assist</label>
+              <input type="number" id="stat-assists" min="0" value="0">
             </div>
           </div>
-          <div class="field">
-            <label for="stat-assists">Assists</label>
-            <input type="number" id="stat-assists" min="0" value="0">
-          </div>
-
-          <div class="checkbox-field">
-            <input type="checkbox" id="stat-mvp">
-            <label for="stat-mvp">Pemain ini MVP di match ini</label>
+          <div class="stats-form-grid">
+            <div class="field">
+              <label for="stat-passes">Umpan</label>
+              <input type="number" id="stat-passes" min="0" value="0">
+            </div>
+            <div class="field">
+              <label for="stat-rating">Rating</label>
+              <input type="number" id="stat-rating" min="0" max="10" step="0.1" value="6.0">
+            </div>
           </div>
 
           <button type="submit" class="btn-primary" id="stats-submit-btn">Simpan Statistik</button>
@@ -121,10 +122,10 @@
         <h3>Statistik Terakhir Diinput</h3>
         <table class="stat-table">
           <thead>
-            <tr><th>Tanggal</th><th>Player</th><th>Lawan</th><th>Hasil</th><th>K/D/A</th><th>MVP</th><th>Aksi</th></tr>
+            <tr><th>Tanggal</th><th>Player</th><th>Lawan</th><th>Hasil</th><th>Goal</th><th>Assist</th><th>Umpan</th><th>Rating</th><th>Aksi</th></tr>
           </thead>
           <tbody id="stats-all-body">
-            <tr><td colspan="7" style="color:var(--muted)">Memuat...</td></tr>
+            <tr><td colspan="9" style="color:var(--muted)">Memuat...</td></tr>
           </tbody>
         </table>
       </div>

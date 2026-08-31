@@ -11,4 +11,13 @@ const db = new Database(DB_PATH);
 const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 db.exec(schema);
 
+// --- Migrasi kecil: kalau tabel match_stats masih pakai struktur lama
+// (kills/deaths/is_mvp), drop & buat ulang dengan struktur baru (goals/assists/passes/rating).
+// Ini cuma menghapus data statistik pertandingan lama, tidak menyentuh users/attendance.
+const columns = db.prepare("PRAGMA table_info(match_stats)").all().map(c => c.name);
+if (columns.includes('kills') && !columns.includes('goals')) {
+  db.exec('DROP TABLE match_stats');
+  db.exec(schema); // buat ulang match_stats dengan struktur terbaru dari schema.sql
+}
+
 module.exports = db;
