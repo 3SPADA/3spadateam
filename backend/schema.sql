@@ -36,5 +36,31 @@ CREATE TABLE IF NOT EXISTS match_stats (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- Event/agenda yang tampil di landing page (dikelola admin)
+CREATE TABLE IF NOT EXISTS events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  event_date TEXT NOT NULL,            -- format YYYY-MM-DD
+  name TEXT NOT NULL,
+  location TEXT,
+  tag TEXT,                            -- contoh: 'Kualifikasi', 'Fase Grup'
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Hasil pertandingan TIM (beda dari match_stats yang per-player) untuk landing page (dikelola admin)
+CREATE TABLE IF NOT EXISTS team_matches (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  match_date TEXT NOT NULL,
+  opponent TEXT NOT NULL,
+  score TEXT NOT NULL,                 -- contoh: '2-1'
+  result TEXT NOT NULL CHECK(result IN ('menang','kalah')),
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Teks-teks landing page yang bisa diubah admin (hero, intro, statistik ringkas, dst)
+CREATE TABLE IF NOT EXISTS site_content (
+  key TEXT PRIMARY KEY,
+  value TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_attendance_user ON attendance(user_id);
 CREATE INDEX IF NOT EXISTS idx_stats_user ON match_stats(user_id);

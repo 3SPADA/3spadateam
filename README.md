@@ -12,12 +12,15 @@ Struktur project:
 │   ├── register.html
 │   ├── dashboard.html  -> khusus anggota yang sudah login (absen + statistik)
 │   ├── staff-stats.html -> khusus staff/coach: input statistik pertandingan player
+│   ├── admin.html       -> khusus admin: kelola event, hasil pertandingan tim, teks landing page
 │   ├── css/style.css
 │   └── js/
 │       ├── config.js       -> SATU baris API_BASE, ini yang diubah saat deploy
 │       ├── main.js         -> menu mobile & tab player/staff
 │       ├── auth.js         -> koneksi ke backend (login/registrasi/dashboard)
-│       └── staff-stats.js  -> logika halaman input statistik staff
+│       ├── staff-stats.js  -> logika halaman input statistik staff
+│       ├── home.js         -> mengisi landing page dari API (teks, event, hasil match)
+│       └── admin.js        -> logika panel admin
 └── backend/            -> API + database
     ├── server.js
     ├── db.js
@@ -60,8 +63,27 @@ Kalau backend dan frontend jalan di alamat berbeda saat sudah online nanti, ubah
 - **Dashboard** (`dashboard.html`, wajib login):
   - Absen harian (Hadir/Izin) — satu status per orang per tanggal.
   - Lihat riwayat statistik pertandingan sendiri (K/D/A, menang/kalah, MVP).
-- **Input statistik pertandingan** (`staff-stats.html`) — hanya bisa diakses akun berstatus **staff**. Kalau player login lalu buka halaman ini, langsung ditolak (dicek dua kali: di frontend lewat `/api/me`, dan di backend lewat middleware `staffOnly`). Di halaman ini staff pilih nama player dari dropdown (otomatis terisi dari roster), isi tanggal/lawan/hasil/K-D-A/MVP, lalu langsung muncul di tabel "Statistik Terakhir Diinput" di bawahnya — lengkap dengan tombol **Edit** dan **Hapus** per baris.
-- Link ke halaman ini otomatis muncul di `dashboard.html` (tombol "Input Statistik Player") kalau yang login akunnya staff — player tidak akan melihat tombol ini sama sekali.
+- **Input statistik pertandingan** (`staff-stats.html`) — hanya bisa diakses akun berstatus **staff/admin**. Kalau player login lalu buka halaman ini, langsung ditolak (dicek dua kali: di frontend lewat `/api/me`, dan di backend lewat middleware `staffOnly`). Di halaman ini staff pilih nama player dari dropdown (otomatis terisi dari roster), isi tanggal/lawan/hasil/Goal/Assist/Umpan/Rating, lalu langsung muncul di tabel "Statistik Terakhir Diinput" di bawahnya — lengkap dengan tombol **Edit** dan **Hapus** per baris.
+- Link ke halaman ini otomatis muncul di `dashboard.html` (tombol "Input Statistik Player") kalau yang login akunnya staff/admin — player tidak akan melihat tombol ini sama sekali.
+- **Panel Admin** (`admin.html`) — khusus akun berstatus **admin** (dicek sama seperti di atas, tapi role harus persis `admin`, staff biasa tidak bisa masuk). Ada 3 tab:
+  - **Event** — tambah/edit/hapus agenda yang tampil di section "Event Terdekat" di landing page.
+  - **Hasil Pertandingan** — tambah/edit/hapus hasil match tim yang tampil di section "Hasil Match Terakhir" di landing page.
+  - **Teks Landing Page** — form untuk mengubah semua teks di halaman Home (judul hero, tagline, angka statistik, teks "Tentang Tim", teks filosofi) tanpa perlu edit kode sama sekali.
+- Halaman `home.html` sekarang mengambil semua teks/event/hasil match dari API (lewat `js/home.js`), jadi begitu admin simpan perubahan di panel admin, langsung kelihatan di landing page (refresh halaman).
+
+### Cara bikin akun admin pertama
+
+Tidak ada tombol "daftar sebagai admin" di form registrasi (sengaja, biar orang lain tidak bisa asal jadi admin). Caranya manual, sekali saja:
+
+1. Daftar akun biasa dulu lewat `register.html` (boleh role player atau staff).
+2. Set environment variable `ADMIN_SETUP_SECRET` di backend (di Railway: tab Variables) — isi string acak, contoh: `promote-admin-3spada-2026`.
+3. Jalankan (dari terminal, ganti `URL-BACKEND` dan `USERNAME` dan `SECRET`):
+   ```bash
+   curl -X POST https://URL-BACKEND/api/admin/promote \
+     -H "Content-Type: application/json" \
+     -d '{"username":"USERNAME","secret":"SECRET"}'
+   ```
+4. Kalau berhasil, muncul `{"message":"USERNAME sekarang jadi admin"}`. Login ulang di website — tombol "Panel Admin" akan muncul di dashboard.
 
 ## 4. Deploy ke Railway
 
@@ -105,6 +127,7 @@ Catatan: alamat pembuka (`/`) otomatis mengarahkan ke `home.html` lewat `fronten
 Ini starter yang sudah jalan dan sudah saya test end-to-end, tapi belum "production-ready":
 
 - Ganti `JWT_SECRET` di env dengan string acak panjang, jangan pakai contoh bawaan.
+- Set `ADMIN_SETUP_SECRET` di env sebelum promote akun admin pertama (lihat bagian 3 di atas), lalu idealnya dihapus/diganti lagi setelahnya biar tidak ada yang iseng promote diri sendiri.
 - Pasang Volume di Railway untuk database (lihat bagian Deploy di atas) — tanpa ini, data bisa hilang tiap deploy ulang.
 - Belum ada halaman admin untuk lihat rekap absen semua orang (API-nya sudah ada: `GET /api/attendance/all`, tinggal dibuatkan tampilannya).
 - Belum ada validasi lanjutan (rate limiting, reset password, dsb).
@@ -125,3 +148,14 @@ Ini starter yang sudah jalan dan sudah saya test end-to-end, tapi belum "product
 | POST | `/api/stats` | staff | Input statistik untuk seorang player |
 | PUT | `/api/stats/:id` | staff | Edit statistik yang salah input |
 | DELETE | `/api/stats/:id` | staff | Hapus statistik |
+| GET | `/api/events` | publik | Daftar event/agenda (untuk landing page) |
+| POST | `/api/events` | admin | Tambah event |
+| PUT | `/api/events/:id` | admin | Edit event |
+| DELETE | `/api/events/:id` | admin | Hapus event |
+| GET | `/api/matches` | publik | Daftar hasil pertandingan tim (untuk landing page) |
+| POST | `/api/matches` | admin | Tambah hasil pertandingan |
+| PUT | `/api/matches/:id` | admin | Edit hasil pertandingan |
+| DELETE | `/api/matches/:id` | admin | Hapus hasil pertandingan |
+| GET | `/api/content` | publik | Semua teks landing page |
+| PUT | `/api/content` | admin | Update teks landing page (kirim object key-value) |
+| POST | `/api/admin/promote` | secret khusus | Jadikan sebuah akun sebagai admin (dipakai sekali di awal) |

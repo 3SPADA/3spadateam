@@ -87,6 +87,10 @@ if (dashRoot) {
         const staffLink = document.getElementById('link-staff-stats');
         if (staffLink) staffLink.style.display = 'inline-flex';
       }
+      if (me.role === 'admin') {
+        const adminLink = document.getElementById('link-admin-panel');
+        if (adminLink) adminLink.style.display = 'inline-flex';
+      }
 
       // Absensi hari ini
       const today = new Date().toISOString().slice(0, 10);

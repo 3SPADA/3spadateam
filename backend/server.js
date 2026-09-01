@@ -43,6 +43,13 @@ function staffOnly(req, res, next) {
   next();
 }
 
+function adminOnly(req, res, next) {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Hanya admin yang boleh melakukan ini' });
+  }
+  next();
+}
+
 // ---------- REGISTER ----------
 app.post('/api/register', (req, res) => {
   const { username, password, full_name, ign, game_role, role } = req.body || {};
@@ -218,6 +225,130 @@ app.delete('/api/stats/:id', authRequired, staffOnly, (req, res) => {
   const info = db.prepare('DELETE FROM match_stats WHERE id = ?').run(id);
   if (info.changes === 0) return res.status(404).json({ error: 'Data statistik tidak ditemukan' });
   res.json({ message: 'Statistik dihapus' });
+});
+
+// ---------- EVENT (agenda di landing page) ----------
+app.get('/api/events', (req, res) => {
+  const rows = db.prepare('SELECT * FROM events ORDER BY event_date ASC').all();
+  res.json(rows);
+});
+
+app.post('/api/events', authRequired, adminOnly, (req, res) => {
+  const { event_date, name, location, tag } = req.body || {};
+  if (!event_date || !name) return res.status(400).json({ error: 'Tanggal dan nama event wajib diisi' });
+  const info = db.prepare(`
+    INSERT INTO events (event_date, name, location, tag) VALUES (?, ?, ?, ?)
+  `).run(event_date, name, location || null, tag || null);
+  res.status(201).json({ id: info.lastInsertRowid, message: 'Event ditambahkan' });
+});
+
+app.put('/api/events/:id', authRequired, adminOnly, (req, res) => {
+  const { id } = req.params;
+  const { event_date, name, location, tag } = req.body || {};
+  const existing = db.prepare('SELECT id FROM events WHERE id = ?').get(id);
+  if (!existing) return res.status(404).json({ error: 'Event tidak ditemukan' });
+  if (!event_date || !name) return res.status(400).json({ error: 'Tanggal dan nama event wajib diisi' });
+  db.prepare(`
+    UPDATE events SET event_date = ?, name = ?, location = ?, tag = ? WHERE id = ?
+  `).run(event_date, name, location || null, tag || null, id);
+  res.json({ message: 'Event diperbarui' });
+});
+
+app.delete('/api/events/:id', authRequired, adminOnly, (req, res) => {
+  const info = db.prepare('DELETE FROM events WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Event tidak ditemukan' });
+  res.json({ message: 'Event dihapus' });
+});
+
+// ---------- HASIL PERTANDINGAN TIM (landing page) ----------
+app.get('/api/matches', (req, res) => {
+  const rows = db.prepare('SELECT * FROM team_matches ORDER BY match_date DESC').all();
+  res.json(rows);
+});
+
+app.post('/api/matches', authRequired, adminOnly, (req, res) => {
+  const { match_date, opponent, score, result } = req.body || {};
+  if (!match_date || !opponent || !score || !result) {
+    return res.status(400).json({ error: 'Data pertandingan belum lengkap' });
+  }
+  if (!['menang', 'kalah'].includes(result)) {
+    return res.status(400).json({ error: 'Hasil harus "menang" atau "kalah"' });
+  }
+  const info = db.prepare(`
+    INSERT INTO team_matches (match_date, opponent, score, result) VALUES (?, ?, ?, ?)
+  `).run(match_date, opponent, score, result);
+  res.status(201).json({ id: info.lastInsertRowid, message: 'Hasil pertandingan ditambahkan' });
+});
+
+app.put('/api/matches/:id', authRequired, adminOnly, (req, res) => {
+  const { id } = req.params;
+  const { match_date, opponent, score, result } = req.body || {};
+  const existing = db.prepare('SELECT id FROM team_matches WHERE id = ?').get(id);
+  if (!existing) return res.status(404).json({ error: 'Data pertandingan tidak ditemukan' });
+  if (!match_date || !opponent || !score || !result) {
+    return res.status(400).json({ error: 'Data pertandingan belum lengkap' });
+  }
+  if (!['menang', 'kalah'].includes(result)) {
+    return res.status(400).json({ error: 'Hasil harus "menang" atau "kalah"' });
+  }
+  db.prepare(`
+    UPDATE team_matches SET match_date = ?, opponent = ?, score = ?, result = ? WHERE id = ?
+  `).run(match_date, opponent, score, result, id);
+  res.json({ message: 'Hasil pertandingan diperbarui' });
+});
+
+app.delete('/api/matches/:id', authRequired, adminOnly, (req, res) => {
+  const info = db.prepare('DELETE FROM team_matches WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Data pertandingan tidak ditemukan' });
+  res.json({ message: 'Hasil pertandingan dihapus' });
+});
+
+// ---------- TEKS LANDING PAGE ----------
+app.get('/api/content', (req, res) => {
+  const rows = db.prepare('SELECT key, value FROM site_content').all();
+  const obj = {};
+  rows.forEach(r => { obj[r.key] = r.value; });
+  res.json(obj);
+});
+
+// Body: objek key-value, contoh { hero_tagline: "...", stat_members: "9" }
+// Cuma key yang sudah ada di database yang akan diupdate (tidak bisa bikin key baru sembarangan).
+app.put('/api/content', authRequired, adminOnly, (req, res) => {
+  const updates = req.body || {};
+  const existingKeys = db.prepare('SELECT key FROM site_content').all().map(r => r.key);
+  const stmt = db.prepare('UPDATE site_content SET value = ? WHERE key = ?');
+
+  const applied = [];
+  for (const [key, value] of Object.entries(updates)) {
+    if (existingKeys.includes(key)) {
+      stmt.run(String(value), key);
+      applied.push(key);
+    }
+  }
+  res.json({ message: 'Teks landing page diperbarui', updated: applied });
+});
+
+// ---------- SETUP AWAL: promosikan akun jadi admin ----------
+// Dipakai SEKALI di awal untuk bikin akun admin pertama, lewat request manual (curl/Postman),
+// bukan lewat UI, supaya orang lain tidak bisa sembarangan jadi admin.
+// Wajib set ADMIN_SETUP_SECRET di environment variable dulu.
+app.post('/api/admin/promote', (req, res) => {
+  const { username, secret } = req.body || {};
+  const expectedSecret = process.env.ADMIN_SETUP_SECRET;
+
+  if (!expectedSecret) {
+    return res.status(403).json({ error: 'ADMIN_SETUP_SECRET belum diset di server, fitur ini nonaktif' });
+  }
+  if (!secret || secret !== expectedSecret) {
+    return res.status(403).json({ error: 'Secret salah' });
+  }
+  if (!username) {
+    return res.status(400).json({ error: 'Username wajib diisi' });
+  }
+
+  const info = db.prepare("UPDATE users SET role = 'admin' WHERE username = ?").run(username);
+  if (info.changes === 0) return res.status(404).json({ error: 'Username tidak ditemukan' });
+  res.json({ message: `${username} sekarang jadi admin` });
 });
 
 app.listen(PORT, () => {

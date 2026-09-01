@@ -31,17 +31,17 @@
 
 <section class="hero">
   <div class="wrap hero-inner">
-    <div class="eyebrow-row"><span class="dot"></span> Komunitas Esport &mdash; Kalimantan Barat</div>
-    <h1>TIGA<br>MATA<br><span class="accent">PEDANG.</span></h1>
+    <div class="eyebrow-row"><span class="dot"></span> <span id="c-hero_eyebrow">Komunitas Esport &mdash; Kalimantan Barat</span></div>
+    <h1><span id="c-hero_title_line1">TIGA</span><br><span id="c-hero_title_line2">MATA</span><br><span class="accent" id="c-hero_title_accent">PEDANG.</span></h1>
     <div class="hero-sub">
-      <p class="hero-tagline">3SPADA lahir dari pertemanan tiga pemain yang menolak kalah diam-diam. Sekarang jadi rumah bagi pemain dan staf yang serius main, santai ngobrol.</p>
+      <p class="hero-tagline" id="c-hero_tagline">3SPADA lahir dari pertemanan tiga pemain yang menolak kalah diam-diam. Sekarang jadi rumah bagi pemain dan staf yang serius main, santai ngobrol.</p>
       <a class="hero-cta" href="team.html">Kenalan sama roster</a>
     </div>
     <div class="stat-row">
-      <div class="stat"><div class="num">2023</div><div class="lbl">Didirikan</div></div>
-      <div class="stat"><div class="num">8</div><div class="lbl">Anggota aktif</div></div>
-      <div class="stat"><div class="num">14</div><div class="lbl">Turnamen diikuti</div></div>
-      <div class="stat"><div class="num mono">9-5</div><div class="lbl">Rekor musim ini</div></div>
+      <div class="stat"><div class="num" id="c-stat_founded">2023</div><div class="lbl">Didirikan</div></div>
+      <div class="stat"><div class="num" id="c-stat_members">8</div><div class="lbl">Anggota aktif</div></div>
+      <div class="stat"><div class="num" id="c-stat_tournaments">14</div><div class="lbl">Turnamen diikuti</div></div>
+      <div class="stat"><div class="num mono" id="c-stat_record">9-5</div><div class="lbl">Rekor musim ini</div></div>
     </div>
   </div>
 </section>
@@ -50,13 +50,13 @@
   <div class="wrap intro-grid">
     <div>
       <div class="section-num">01 / Tentang Tim</div>
-      <h2 style="margin-top:10px;">Dari Sambas, untuk arena</h2>
-      <p style="margin-top:20px;">3SPADA berawal dari mabar rutin tiga anak Sambas yang keterusan sampai ikut turnamen regional. Nama "Spada" kami ambil dari kata pedang &mdash; filosofinya sederhana, main harus tajam dan tenang, bukan asal agresif.</p>
-      <p>Hari ini tim diisi lima pemain inti dan tiga staf pendukung, semua masih berstatus komunitas &mdash; belum ada yang jadi pro penuh waktu, tapi latihannya sudah seserius tim semi-pro.</p>
+      <h2 style="margin-top:10px;" id="c-intro_title">Dari Sambas, untuk arena</h2>
+      <p style="margin-top:20px;" id="c-intro_paragraph_1">3SPADA berawal dari mabar rutin tiga anak Sambas yang keterusan sampai ikut turnamen regional. Nama "Spada" kami ambil dari kata pedang &mdash; filosofinya sederhana, main harus tajam dan tenang, bukan asal agresif.</p>
+      <p id="c-intro_paragraph_2">Hari ini tim diisi lima pemain inti dan tiga staf pendukung, semua masih berstatus komunitas &mdash; belum ada yang jadi pro penuh waktu, tapi latihannya sudah seserius tim semi-pro.</p>
     </div>
     <div class="intro-card">
       <h3>Filosofi main</h3>
-      <p>Rotasi rapi, komunikasi pendek, dan nggak ada yang boleh nge-blame di voice chat pas lagi kalah. Evaluasi selalu habis pertandingan, bukan di tengah game.</p>
+      <p id="c-philosophy_text">Rotasi rapi, komunikasi pendek, dan nggak ada yang boleh nge-blame di voice chat pas lagi kalah. Evaluasi selalu habis pertandingan, bukan di tengah game.</p>
     </div>
   </div>
 </section>
@@ -79,22 +79,8 @@
 <section class="section">
   <div class="wrap">
     <div class="section-head"><div><div class="section-num">03 / Agenda</div><h2>Event Terdekat</h2></div></div>
-    <div class="event-list">
-      <div class="event-row">
-        <div class="event-date">14 SEP<br>2026</div>
-        <div><div class="event-name">IEL Season 5 — Regional Kalimantan</div><div class="event-loc">Pontianak, offline qualifier</div></div>
-        <div class="event-tag">Kualifikasi</div>
-      </div>
-      <div class="event-row">
-        <div class="event-date">28 SEP<br>2026</div>
-        <div><div class="event-name">NUSA CUP — Community Series</div><div class="event-loc">Online, BO3 grup</div></div>
-        <div class="event-tag">Fase Grup</div>
-      </div>
-      <div class="event-row">
-        <div class="event-date">19 OKT<br>2026</div>
-        <div><div class="event-name">Piala Kemerdekaan Esport Kalbar</div><div class="event-loc">Sambas, offline final</div></div>
-        <div class="event-tag">Undangan</div>
-      </div>
+    <div class="event-list" id="event-list">
+      <div class="event-row"><div style="color:var(--muted)">Memuat agenda...</div></div>
     </div>
   </div>
 </section>
@@ -102,11 +88,8 @@
 <section class="section">
   <div class="wrap">
     <div class="section-head"><div><div class="section-num">04 / Rekap</div><h2>Hasil Match Terakhir</h2></div></div>
-    <div class="match-grid">
-      <div class="match-card"><div><div class="match-opp">vs EVOS Muda Kalbar</div><div class="match-date">20 Agu 2026</div></div><div style="display:flex;align-items:center;gap:16px;"><span class="match-score">2–1</span><span class="badge win">MENANG</span></div></div>
-      <div class="match-card"><div><div class="match-opp">vs RRQ Sahur Squad</div><div class="match-date">12 Agu 2026</div></div><div style="display:flex;align-items:center;gap:16px;"><span class="match-score">0–2</span><span class="badge loss">KALAH</span></div></div>
-      <div class="match-card"><div><div class="match-opp">vs ONIC Prodigy</div><div class="match-date">5 Agu 2026</div></div><div style="display:flex;align-items:center;gap:16px;"><span class="match-score">2–0</span><span class="badge win">MENANG</span></div></div>
-      <div class="match-card"><div><div class="match-opp">vs Bigetron Alpha</div><div class="match-date">29 Jul 2026</div></div><div style="display:flex;align-items:center;gap:16px;"><span class="match-score">2–1</span><span class="badge win">MENANG</span></div></div>
+    <div class="match-grid" id="match-grid">
+      <div class="match-card"><div style="color:var(--muted)">Memuat hasil match...</div></div>
     </div>
   </div>
 </section>
@@ -118,6 +101,8 @@
   </div>
 </footer>
 
+<script src="js/config.js"></script>
 <script src="js/main.js"></script>
+<script src="js/home.js"></script>
 </body>
 </html>
