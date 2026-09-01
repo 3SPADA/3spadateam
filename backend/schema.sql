@@ -56,6 +56,14 @@ CREATE TABLE IF NOT EXISTS team_matches (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- Sponsor yang tampil di landing page (dikelola admin)
+CREATE TABLE IF NOT EXISTS sponsors (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  kind TEXT,                           -- contoh: 'Internet & Hosting', 'Minuman Energi'
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
 -- Teks-teks landing page yang bisa diubah admin (hero, intro, statistik ringkas, dst)
 CREATE TABLE IF NOT EXISTS site_content (
   key TEXT PRIMARY KEY,

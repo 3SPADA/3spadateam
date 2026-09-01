@@ -82,6 +82,16 @@ if (dashRoot) {
 
       document.getElementById('dash-name').textContent = me.full_name;
       document.getElementById('dash-role').textContent = (me.game_role || '-') + ' · ' + me.role.toUpperCase();
+      _currentRole = me.role;
+
+      // Isi form Edit Profil dengan data saat ini
+      document.getElementById('profile-name').value = me.full_name || '';
+      document.getElementById('profile-ign').value = me.ign || '';
+      document.getElementById('profile-role').value = me.game_role || '';
+      document.getElementById('profile-photo').value = me.photo_url || '';
+
+      document.getElementById('profile-form').addEventListener('submit', (e) => handleProfileSubmit(e, authHeaders));
+      document.getElementById('password-form').addEventListener('submit', (e) => handlePasswordSubmit(e, authHeaders));
 
       if (me.role === 'staff' || me.role === 'admin') {
         const staffLink = document.getElementById('link-staff-stats');
@@ -161,5 +171,54 @@ async function loadAttendanceHistory(authHeaders) {
     ).join('');
   } catch (err) {
     tbody.innerHTML = '<tr><td colspan="2" style="color:var(--loss)">Gagal memuat data.</td></tr>';
+  }
+}
+
+let _currentRole = '';
+
+async function handleProfileSubmit(e, authHeaders) {
+  e.preventDefault();
+  const msg = document.getElementById('profile-form-msg');
+  const body = {
+    full_name: document.getElementById('profile-name').value.trim(),
+    ign: document.getElementById('profile-ign').value.trim(),
+    game_role: document.getElementById('profile-role').value.trim(),
+    photo_url: document.getElementById('profile-photo').value.trim()
+  };
+  try {
+    const res = await fetch(API_BASE + '/me', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal menyimpan profil');
+    showMsg(msg, 'Profil tersimpan.', 'success');
+    document.getElementById('dash-name').textContent = body.full_name;
+    document.getElementById('dash-role').textContent = (body.game_role || '-') + ' · ' + _currentRole.toUpperCase();
+  } catch (err) {
+    showMsg(msg, err.message, 'error');
+  }
+}
+
+async function handlePasswordSubmit(e, authHeaders) {
+  e.preventDefault();
+  const msg = document.getElementById('password-form-msg');
+  const body = {
+    current_password: document.getElementById('pw-current').value,
+    new_password: document.getElementById('pw-new').value
+  };
+  try {
+    const res = await fetch(API_BASE + '/me/password', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal mengganti password');
+    showMsg(msg, 'Password berhasil diganti.', 'success');
+    document.getElementById('password-form').reset();
+  } catch (err) {
+    showMsg(msg, err.message, 'error');
   }
 }

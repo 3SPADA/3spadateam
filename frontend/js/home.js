@@ -1,5 +1,5 @@
-// Home.html sekarang mengambil teks, event, dan hasil match dari backend,
-// supaya admin bisa mengubahnya tanpa harus edit kode.
+// Home.html sekarang mengambil event dan hasil match dari backend (teks umum
+// ditangani oleh js/content.js yang dimuat bersama di halaman ini).
 
 const MONTH_SHORT_UPPER = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGU','SEP','OKT','NOV','DES'];
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
@@ -10,16 +10,22 @@ function parseDateParts(isoDate) {
 }
 
 (async () => {
-  // ---------- TEKS LANDING PAGE ----------
+  // ---------- SPONSOR ----------
   try {
-    const res = await fetch(API_BASE + '/content');
-    const content = await res.json();
-    Object.entries(content).forEach(([key, value]) => {
-      const el = document.getElementById('c-' + key);
-      if (el) el.textContent = value;
-    });
+    const res = await fetch(API_BASE + '/sponsors');
+    const sponsors = await res.json();
+    const strip = document.getElementById('sponsor-strip');
+    if (sponsors.length === 0) {
+      strip.innerHTML = '<div class="sponsor-tile"><div style="color:var(--muted)">Belum ada sponsor.</div></div>';
+    } else {
+      strip.innerHTML = sponsors.map(s => `
+        <div class="sponsor-tile">
+          <div class="mark">${s.name}</div>
+          <div class="kind">${s.kind || ''}</div>
+        </div>`).join('');
+    }
   } catch (err) {
-    console.error('Gagal memuat teks landing page:', err);
+    console.error('Gagal memuat sponsor:', err);
   }
 
   // ---------- EVENT ----------

@@ -31,6 +31,8 @@ if (adminRoot) {
       document.getElementById('event-cancel-btn').addEventListener('click', exitEventEditMode);
       document.getElementById('match-form').addEventListener('submit', handleMatchSubmit);
       document.getElementById('match-cancel-btn').addEventListener('click', exitMatchEditMode);
+      document.getElementById('sponsor-form').addEventListener('submit', handleSponsorSubmit);
+      document.getElementById('sponsor-cancel-btn').addEventListener('click', exitSponsorEditMode);
       document.getElementById('content-form').addEventListener('submit', handleContentSubmit);
 
       document.getElementById('event-date').value = new Date().toISOString().slice(0, 10);
@@ -38,6 +40,7 @@ if (adminRoot) {
 
       await loadEvents();
       await loadMatches();
+      await loadSponsors();
       await loadContent();
     } catch (err) {
       console.error(err);
@@ -271,11 +274,120 @@ async function handleMatchDelete(id) {
   }
 }
 
-// ================= TEKS LANDING PAGE =================
+// ================= SPONSOR =================
+let _sponsorsCache = [];
+
+async function loadSponsors() {
+  const tbody = document.getElementById('sponsor-body');
+  try {
+    const res = await fetch(API_BASE + '/sponsors');
+    const rows = await res.json();
+    _sponsorsCache = rows;
+
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted)">Belum ada sponsor.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.name}</td>
+        <td>${r.kind || '-'}</td>
+        <td>
+          <button type="button" class="row-action edit" data-id="${r.id}">Edit</button>
+          <button type="button" class="row-action delete" data-id="${r.id}">Hapus</button>
+        </td>
+      </tr>
+    `).join('');
+
+    tbody.querySelectorAll('.row-action.edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = _sponsorsCache.find(r => String(r.id) === btn.dataset.id);
+        if (row) enterSponsorEditMode(row);
+      });
+    });
+    tbody.querySelectorAll('.row-action.delete').forEach(btn => {
+      btn.addEventListener('click', () => handleSponsorDelete(btn.dataset.id));
+    });
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--loss)">Gagal memuat data.</td></tr>';
+  }
+}
+
+async function handleSponsorSubmit(e) {
+  e.preventDefault();
+  const msg = document.getElementById('sponsor-form-msg');
+  const editId = document.getElementById('sponsor-edit-id').value;
+  const body = {
+    name: document.getElementById('sponsor-name').value.trim(),
+    kind: document.getElementById('sponsor-kind').value.trim()
+  };
+  const isEdit = !!editId;
+  const url = isEdit ? `${API_BASE}/sponsors/${editId}` : `${API_BASE}/sponsors`;
+  const method = isEdit ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', ..._adminAuthHeaders },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal menyimpan sponsor');
+    showMsg(msg, isEdit ? 'Sponsor diperbarui.' : 'Sponsor ditambahkan.', 'success');
+    exitSponsorEditMode();
+    await loadSponsors();
+  } catch (err) {
+    showMsg(msg, err.message, 'error');
+  }
+}
+
+function enterSponsorEditMode(row) {
+  document.getElementById('sponsor-edit-id').value = row.id;
+  document.getElementById('sponsor-name').value = row.name;
+  document.getElementById('sponsor-kind').value = row.kind || '';
+  document.getElementById('sponsor-form-title').textContent = 'Edit Sponsor';
+  document.getElementById('sponsor-submit-btn').textContent = 'Simpan Perubahan';
+  document.getElementById('sponsor-cancel-btn').style.display = 'block';
+  document.getElementById('sponsor-form-msg').textContent = '';
+  document.getElementById('sponsor-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function exitSponsorEditMode() {
+  document.getElementById('sponsor-form').reset();
+  document.getElementById('sponsor-edit-id').value = '';
+  document.getElementById('sponsor-form-title').textContent = 'Tambah Sponsor Baru';
+  document.getElementById('sponsor-submit-btn').textContent = 'Simpan Sponsor';
+  document.getElementById('sponsor-cancel-btn').style.display = 'none';
+}
+
+async function handleSponsorDelete(id) {
+  if (!confirm('Hapus sponsor ini?')) return;
+  const msg = document.getElementById('sponsor-form-msg');
+  try {
+    const res = await fetch(`${API_BASE}/sponsors/${id}`, { method: 'DELETE', headers: _adminAuthHeaders });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal menghapus sponsor');
+    showMsg(msg, 'Sponsor dihapus.', 'success');
+    if (document.getElementById('sponsor-edit-id').value == id) exitSponsorEditMode();
+    await loadSponsors();
+  } catch (err) {
+    showMsg(msg, err.message, 'error');
+  }
+}
+
+// ================= TEKS HALAMAN =================
 const CONTENT_KEYS = [
   'hero_eyebrow', 'hero_title_line1', 'hero_title_line2', 'hero_title_accent', 'hero_tagline',
   'stat_founded', 'stat_members', 'stat_tournaments', 'stat_record',
-  'intro_title', 'intro_paragraph_1', 'intro_paragraph_2', 'philosophy_text'
+  'intro_title', 'intro_paragraph_1', 'intro_paragraph_2', 'philosophy_text',
+  'team_title', 'team_subtitle',
+  'about_eyebrow', 'about_paragraph_1', 'about_paragraph_2',
+  'vision_text', 'mission_text', 'values_text',
+  'timeline_2023_title', 'timeline_2023_desc',
+  'timeline_2024_title', 'timeline_2024_desc',
+  'timeline_2025_title', 'timeline_2025_desc',
+  'timeline_2026_title', 'timeline_2026_desc',
+  'contact_intro', 'contact_instagram_url', 'contact_tiktok_url', 'contact_discord_url', 'contact_email_url'
 ];
 
 async function loadContent() {
@@ -308,7 +420,7 @@ async function handleContentSubmit(e) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Gagal menyimpan perubahan');
-    showMsg(msg, 'Teks landing page tersimpan. Cek halaman Home untuk lihat hasilnya.', 'success');
+    showMsg(msg, 'Teks tersimpan. Cek halaman Home/Team/About Us untuk lihat hasilnya.', 'success');
   } catch (err) {
     showMsg(msg, err.message, 'error');
   }

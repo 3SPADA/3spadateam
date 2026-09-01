@@ -76,6 +76,48 @@
           </tbody>
         </table>
       </div>
+
+      <div class="dash-grid" style="margin-top:24px;">
+        <div class="dash-card">
+          <h3>Edit Profil</h3>
+          <form id="profile-form">
+            <div class="field">
+              <label for="profile-name">Nama Lengkap</label>
+              <input type="text" id="profile-name" required>
+            </div>
+            <div class="field">
+              <label for="profile-ign">In-Game Name (IGN)</label>
+              <input type="text" id="profile-ign">
+            </div>
+            <div class="field">
+              <label for="profile-role">Role di Game</label>
+              <input type="text" id="profile-role" placeholder="Contoh: EXP Laner, Coach, Manager">
+            </div>
+            <div class="field">
+              <label for="profile-photo">URL Foto (opsional)</label>
+              <input type="text" id="profile-photo" placeholder="https://...">
+            </div>
+            <button type="submit" class="btn-primary">Simpan Profil</button>
+            <div class="form-msg" id="profile-form-msg"></div>
+          </form>
+        </div>
+
+        <div class="dash-card">
+          <h3>Ganti Password</h3>
+          <form id="password-form">
+            <div class="field">
+              <label for="pw-current">Password Lama</label>
+              <input type="password" id="pw-current" required autocomplete="current-password">
+            </div>
+            <div class="field">
+              <label for="pw-new">Password Baru</label>
+              <input type="password" id="pw-new" required minlength="6" autocomplete="new-password">
+            </div>
+            <button type="submit" class="btn-primary">Ganti Password</button>
+            <div class="form-msg" id="password-form-msg"></div>
+          </form>
+        </div>
+      </div>
     </div>
   </section>
 </div>

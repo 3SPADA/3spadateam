@@ -19,7 +19,9 @@ Struktur project:
 │       ├── main.js         -> menu mobile & tab player/staff
 │       ├── auth.js         -> koneksi ke backend (login/registrasi/dashboard)
 │       ├── staff-stats.js  -> logika halaman input statistik staff
-│       ├── home.js         -> mengisi landing page dari API (teks, event, hasil match)
+│       ├── home.js         -> mengisi event, sponsor, hasil match di halaman Home
+│       ├── content.js      -> generic: isi teks halaman dari /api/content (dipakai home/team/about)
+│       ├── team.js         -> mengisi roster Team dari akun asli (GET /api/roster)
 │       └── admin.js        -> logika panel admin
 └── backend/            -> API + database
     ├── server.js
@@ -62,14 +64,17 @@ Kalau backend dan frontend jalan di alamat berbeda saat sudah online nanti, ubah
 - **Login** (`login.html`) — dapat token (JWT) yang disimpan di browser, berlaku 7 hari.
 - **Dashboard** (`dashboard.html`, wajib login):
   - Absen harian (Hadir/Izin) — satu status per orang per tanggal.
-  - Lihat riwayat statistik pertandingan sendiri (K/D/A, menang/kalah, MVP).
+  - Lihat riwayat statistik pertandingan sendiri (Goal/Assist/Umpan/Rating, menang/kalah).
+  - **Edit Profil** — ubah nama lengkap, IGN, role di game, dan URL foto sendiri. Perubahan ini langsung kelihatan di halaman Team (roster sekarang ambil data asli dari akun terdaftar lewat `js/team.js`, bukan data dummy lagi).
+  - **Ganti Password** — wajib masukkan password lama dulu sebelum bisa ganti ke password baru.
 - **Input statistik pertandingan** (`staff-stats.html`) — hanya bisa diakses akun berstatus **staff/admin**. Kalau player login lalu buka halaman ini, langsung ditolak (dicek dua kali: di frontend lewat `/api/me`, dan di backend lewat middleware `staffOnly`). Di halaman ini staff pilih nama player dari dropdown (otomatis terisi dari roster), isi tanggal/lawan/hasil/Goal/Assist/Umpan/Rating, lalu langsung muncul di tabel "Statistik Terakhir Diinput" di bawahnya — lengkap dengan tombol **Edit** dan **Hapus** per baris.
 - Link ke halaman ini otomatis muncul di `dashboard.html` (tombol "Input Statistik Player") kalau yang login akunnya staff/admin — player tidak akan melihat tombol ini sama sekali.
-- **Panel Admin** (`admin.html`) — khusus akun berstatus **admin** (dicek sama seperti di atas, tapi role harus persis `admin`, staff biasa tidak bisa masuk). Ada 3 tab:
-  - **Event** — tambah/edit/hapus agenda yang tampil di section "Event Terdekat" di landing page.
-  - **Hasil Pertandingan** — tambah/edit/hapus hasil match tim yang tampil di section "Hasil Match Terakhir" di landing page.
-  - **Teks Landing Page** — form untuk mengubah semua teks di halaman Home (judul hero, tagline, angka statistik, teks "Tentang Tim", teks filosofi) tanpa perlu edit kode sama sekali.
-- Halaman `home.html` sekarang mengambil semua teks/event/hasil match dari API (lewat `js/home.js`), jadi begitu admin simpan perubahan di panel admin, langsung kelihatan di landing page (refresh halaman).
+- **Panel Admin** (`admin.html`) — khusus akun berstatus **admin** (dicek sama seperti di atas, tapi role harus persis `admin`, staff biasa tidak bisa masuk). Ada 4 tab:
+  - **Event** — tambah/edit/hapus agenda yang tampil di section "Event Terdekat" di halaman Home.
+  - **Hasil Pertandingan** — tambah/edit/hapus hasil match tim yang tampil di section "Hasil Match Terakhir" di halaman Home.
+  - **Sponsor** — tambah/edit/hapus sponsor yang tampil di section "Sponsorship" di halaman Home.
+  - **Teks Halaman** — form untuk mengubah semua teks di halaman Home (hero, statistik ringkas, "Tentang Tim"), Team (judul & subjudul di atas roster), dan About Us (cerita tim, visi/misi/nilai, jejak singkat, link kontak) — tanpa perlu edit kode sama sekali.
+- Halaman `home.html`, `team.html`, dan `about.html` sekarang mengambil semua teks dari API lewat `js/content.js` (dan `home.html` juga ambil event/sponsor/hasil match lewat `js/home.js`), jadi begitu admin simpan perubahan di panel admin, langsung kelihatan di halaman terkait (refresh halaman). Daftar player/staff di halaman Team tetap otomatis dari akun yang terdaftar, bukan dari panel admin.
 
 ### Cara bikin akun admin pertama
 
@@ -139,6 +144,8 @@ Ini starter yang sudah jalan dan sudah saya test end-to-end, tapi belum "product
 | POST | `/api/register` | publik | Daftar akun player/staff |
 | POST | `/api/login` | publik | Login, dapat token |
 | GET | `/api/me` | login | Profil sendiri |
+| PUT | `/api/me` | login | Edit profil sendiri (nama, IGN, role di game, foto) |
+| PUT | `/api/me/password` | login | Ganti password sendiri (wajib password lama) |
 | GET | `/api/roster` | publik | Daftar semua anggota (untuk halaman Team) |
 | POST | `/api/attendance` | login | Catat absen hari ini |
 | GET | `/api/attendance/me` | login | Riwayat absen sendiri |
@@ -156,6 +163,10 @@ Ini starter yang sudah jalan dan sudah saya test end-to-end, tapi belum "product
 | POST | `/api/matches` | admin | Tambah hasil pertandingan |
 | PUT | `/api/matches/:id` | admin | Edit hasil pertandingan |
 | DELETE | `/api/matches/:id` | admin | Hapus hasil pertandingan |
-| GET | `/api/content` | publik | Semua teks landing page |
-| PUT | `/api/content` | admin | Update teks landing page (kirim object key-value) |
+| GET | `/api/sponsors` | publik | Daftar sponsor (untuk halaman Home) |
+| POST | `/api/sponsors` | admin | Tambah sponsor |
+| PUT | `/api/sponsors/:id` | admin | Edit sponsor |
+| DELETE | `/api/sponsors/:id` | admin | Hapus sponsor |
+| GET | `/api/content` | publik | Semua teks halaman (home/team/about) |
+| PUT | `/api/content` | admin | Update teks halaman (kirim object key-value) |
 | POST | `/api/admin/promote` | secret khusus | Jadikan sebuah akun sebagai admin (dipakai sekali di awal) |

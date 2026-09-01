@@ -75,7 +75,8 @@
       <div class="admin-tabs">
         <button class="admin-tab active" data-panel="events">Event</button>
         <button class="admin-tab" data-panel="matches">Hasil Pertandingan</button>
-        <button class="admin-tab" data-panel="content">Teks Landing Page</button>
+        <button class="admin-tab" data-panel="sponsors">Sponsor</button>
+        <button class="admin-tab" data-panel="content">Teks Halaman</button>
       </div>
 
       <!-- ===== PANEL EVENT ===== -->
@@ -155,10 +156,40 @@
         </div>
       </div>
 
-      <!-- ===== PANEL TEKS LANDING PAGE ===== -->
+      <!-- ===== PANEL SPONSOR ===== -->
+      <div class="admin-panel" id="panel-sponsors">
+        <div class="dash-card" style="max-width:640px; margin-bottom:32px;">
+          <h3 id="sponsor-form-title" style="margin-bottom:14px;">Tambah Sponsor Baru</h3>
+          <form id="sponsor-form">
+            <input type="hidden" id="sponsor-edit-id" value="">
+            <div class="field">
+              <label for="sponsor-name">Nama Sponsor</label>
+              <input type="text" id="sponsor-name" placeholder="Contoh: NUSAHOST" required>
+            </div>
+            <div class="field">
+              <label for="sponsor-kind">Kategori</label>
+              <input type="text" id="sponsor-kind" placeholder="Contoh: Internet & Hosting">
+            </div>
+            <button type="submit" class="btn-primary" id="sponsor-submit-btn">Simpan Sponsor</button>
+            <button type="button" class="btn-primary" id="sponsor-cancel-btn" style="display:none; background:var(--ink-3); color:var(--paper); border:1px solid var(--line); margin-top:10px;">Batal Edit</button>
+            <div class="form-msg" id="sponsor-form-msg"></div>
+          </form>
+        </div>
+
+        <div class="dash-card">
+          <h3>Daftar Sponsor</h3>
+          <table class="stat-table">
+            <thead><tr><th>Nama</th><th>Kategori</th><th>Aksi</th></tr></thead>
+            <tbody id="sponsor-body"><tr><td colspan="3" style="color:var(--muted)">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== PANEL TEKS HALAMAN ===== -->
       <div class="admin-panel" id="panel-content">
         <div class="dash-card" style="max-width:720px;">
-          <h3 style="margin-bottom:14px;">Edit Teks Halaman Utama</h3>
+          <h3 style="margin-bottom:4px;">Halaman Home</h3>
+          <p style="font-size:13px; margin-bottom:18px;">Hero, statistik ringkas, dan bagian "Tentang Tim".</p>
           <form id="content-form">
             <div class="field content-field">
               <label for="cf-hero_eyebrow">Label kecil di atas judul hero</label>
@@ -212,6 +243,97 @@
               <label for="cf-philosophy_text">Teks kotak "Filosofi main"</label>
               <textarea id="cf-philosophy_text" rows="3"></textarea>
             </div>
+
+            <h3 style="margin:32px 0 4px;">Halaman Team</h3>
+            <p style="font-size:13px; margin-bottom:18px;">Judul dan subjudul di atas daftar roster (daftar player/staff sendiri otomatis dari akun terdaftar, bukan dari sini).</p>
+            <div class="field content-field">
+              <label for="cf-team_title">Judul halaman Team</label>
+              <input type="text" id="cf-team_title">
+            </div>
+            <div class="field content-field">
+              <label for="cf-team_subtitle">Subjudul halaman Team</label>
+              <textarea id="cf-team_subtitle" rows="2"></textarea>
+            </div>
+
+            <h3 style="margin:32px 0 4px;">Halaman About Us</h3>
+            <p style="font-size:13px; margin-bottom:18px;">Cerita tim, visi/misi/nilai, jejak singkat, dan link kontak.</p>
+            <div class="field content-field">
+              <label for="cf-about_eyebrow">Label kecil di atas judul About</label>
+              <input type="text" id="cf-about_eyebrow">
+            </div>
+            <div class="field content-field">
+              <label for="cf-about_paragraph_1">Paragraf 1 — cerita tim</label>
+              <textarea id="cf-about_paragraph_1" rows="3"></textarea>
+            </div>
+            <div class="field content-field">
+              <label for="cf-about_paragraph_2">Paragraf 2 — cerita tim</label>
+              <textarea id="cf-about_paragraph_2" rows="3"></textarea>
+            </div>
+            <div class="field content-field">
+              <label for="cf-vision_text">Visi</label>
+              <textarea id="cf-vision_text" rows="2"></textarea>
+            </div>
+            <div class="field content-field">
+              <label for="cf-mission_text">Misi</label>
+              <textarea id="cf-mission_text" rows="2"></textarea>
+            </div>
+            <div class="field content-field">
+              <label for="cf-values_text">Nilai</label>
+              <textarea id="cf-values_text" rows="2"></textarea>
+            </div>
+            <div class="field content-field">
+              <label for="cf-timeline_2023_title">Jejak Singkat 2023 — judul</label>
+              <input type="text" id="cf-timeline_2023_title">
+            </div>
+            <div class="field content-field">
+              <label for="cf-timeline_2023_desc">Jejak Singkat 2023 — deskripsi</label>
+              <textarea id="cf-timeline_2023_desc" rows="2"></textarea>
+            </div>
+            <div class="field content-field">
+              <label for="cf-timeline_2024_title">Jejak Singkat 2024 — judul</label>
+              <input type="text" id="cf-timeline_2024_title">
+            </div>
+            <div class="field content-field">
+              <label for="cf-timeline_2024_desc">Jejak Singkat 2024 — deskripsi</label>
+              <textarea id="cf-timeline_2024_desc" rows="2"></textarea>
+            </div>
+            <div class="field content-field">
+              <label for="cf-timeline_2025_title">Jejak Singkat 2025 — judul</label>
+              <input type="text" id="cf-timeline_2025_title">
+            </div>
+            <div class="field content-field">
+              <label for="cf-timeline_2025_desc">Jejak Singkat 2025 — deskripsi</label>
+              <textarea id="cf-timeline_2025_desc" rows="2"></textarea>
+            </div>
+            <div class="field content-field">
+              <label for="cf-timeline_2026_title">Jejak Singkat 2026 — judul</label>
+              <input type="text" id="cf-timeline_2026_title">
+            </div>
+            <div class="field content-field">
+              <label for="cf-timeline_2026_desc">Jejak Singkat 2026 — deskripsi</label>
+              <textarea id="cf-timeline_2026_desc" rows="2"></textarea>
+            </div>
+            <div class="field content-field">
+              <label for="cf-contact_intro">Kalimat pembuka bagian Kontak</label>
+              <textarea id="cf-contact_intro" rows="2"></textarea>
+            </div>
+            <div class="field content-field">
+              <label for="cf-contact_instagram_url">Link Instagram</label>
+              <input type="text" id="cf-contact_instagram_url" placeholder="https://instagram.com/...">
+            </div>
+            <div class="field content-field">
+              <label for="cf-contact_tiktok_url">Link TikTok</label>
+              <input type="text" id="cf-contact_tiktok_url" placeholder="https://tiktok.com/@...">
+            </div>
+            <div class="field content-field">
+              <label for="cf-contact_discord_url">Link Discord</label>
+              <input type="text" id="cf-contact_discord_url" placeholder="https://discord.gg/...">
+            </div>
+            <div class="field content-field">
+              <label for="cf-contact_email_url">Link Email (mailto:)</label>
+              <input type="text" id="cf-contact_email_url" placeholder="mailto:contact@3spada.com">
+            </div>
+
             <button type="submit" class="btn-primary">Simpan Semua Perubahan</button>
             <div class="form-msg" id="content-form-msg"></div>
           </form>

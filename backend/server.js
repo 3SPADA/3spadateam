@@ -108,6 +108,39 @@ app.get('/api/me', authRequired, (req, res) => {
   res.json(user);
 });
 
+// Player/staff mengubah profil sendiri (nama, IGN, role di game, foto).
+// Username dan role TIDAK bisa diubah lewat sini — role cuma lewat /api/admin/promote.
+app.put('/api/me', authRequired, (req, res) => {
+  const { full_name, ign, game_role, photo_url } = req.body || {};
+  if (!full_name || !full_name.trim()) {
+    return res.status(400).json({ error: 'Nama lengkap wajib diisi' });
+  }
+  db.prepare(`
+    UPDATE users SET full_name = ?, ign = ?, game_role = ?, photo_url = ? WHERE id = ?
+  `).run(full_name.trim(), ign || null, game_role || null, photo_url || null, req.user.id);
+  res.json({ message: 'Profil diperbarui' });
+});
+
+// Ganti password sendiri, wajib konfirmasi password lama dulu.
+app.put('/api/me/password', authRequired, (req, res) => {
+  const { current_password, new_password } = req.body || {};
+  if (!current_password || !new_password) {
+    return res.status(400).json({ error: 'Password lama dan password baru wajib diisi' });
+  }
+  if (new_password.length < 6) {
+    return res.status(400).json({ error: 'Password baru minimal 6 karakter' });
+  }
+
+  const user = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.user.id);
+  if (!user || !bcrypt.compareSync(current_password, user.password_hash)) {
+    return res.status(401).json({ error: 'Password lama salah' });
+  }
+
+  const newHash = bcrypt.hashSync(new_password, 10);
+  db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newHash, req.user.id);
+  res.json({ message: 'Password berhasil diganti' });
+});
+
 // ---------- ROSTER PUBLIK (untuk halaman Team) ----------
 app.get('/api/roster', (req, res) => {
   const rows = db.prepare(`
@@ -303,7 +336,36 @@ app.delete('/api/matches/:id', authRequired, adminOnly, (req, res) => {
   res.json({ message: 'Hasil pertandingan dihapus' });
 });
 
-// ---------- TEKS LANDING PAGE ----------
+// ---------- SPONSOR (landing page) ----------
+app.get('/api/sponsors', (req, res) => {
+  const rows = db.prepare('SELECT * FROM sponsors ORDER BY id ASC').all();
+  res.json(rows);
+});
+
+app.post('/api/sponsors', authRequired, adminOnly, (req, res) => {
+  const { name, kind } = req.body || {};
+  if (!name) return res.status(400).json({ error: 'Nama sponsor wajib diisi' });
+  const info = db.prepare('INSERT INTO sponsors (name, kind) VALUES (?, ?)').run(name, kind || null);
+  res.status(201).json({ id: info.lastInsertRowid, message: 'Sponsor ditambahkan' });
+});
+
+app.put('/api/sponsors/:id', authRequired, adminOnly, (req, res) => {
+  const { id } = req.params;
+  const { name, kind } = req.body || {};
+  const existing = db.prepare('SELECT id FROM sponsors WHERE id = ?').get(id);
+  if (!existing) return res.status(404).json({ error: 'Sponsor tidak ditemukan' });
+  if (!name) return res.status(400).json({ error: 'Nama sponsor wajib diisi' });
+  db.prepare('UPDATE sponsors SET name = ?, kind = ? WHERE id = ?').run(name, kind || null, id);
+  res.json({ message: 'Sponsor diperbarui' });
+});
+
+app.delete('/api/sponsors/:id', authRequired, adminOnly, (req, res) => {
+  const info = db.prepare('DELETE FROM sponsors WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Sponsor tidak ditemukan' });
+  res.json({ message: 'Sponsor dihapus' });
+});
+
+// ---------- TEKS HALAMAN (home, team, about) ----------
 app.get('/api/content', (req, res) => {
   const rows = db.prepare('SELECT key, value FROM site_content').all();
   const obj = {};
