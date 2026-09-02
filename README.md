@@ -12,6 +12,7 @@ Struktur project:
 │   ├── register.html
 │   ├── dashboard.html  -> khusus anggota yang sudah login (absen + statistik)
 │   ├── staff-stats.html -> khusus staff/coach: input statistik pertandingan player
+│   ├── reports.html     -> khusus staff/admin: leaderboard laporan performa semua player
 │   ├── admin.html       -> khusus admin: kelola event, hasil pertandingan tim, teks landing page
 │   ├── css/style.css
 │   └── js/
@@ -22,6 +23,7 @@ Struktur project:
 │       ├── home.js         -> mengisi event, sponsor, hasil match di halaman Home
 │       ├── content.js      -> generic: isi teks halaman dari /api/content (dipakai home/team/about)
 │       ├── team.js         -> mengisi roster Team dari akun asli (GET /api/roster)
+│       ├── reports.js      -> logika halaman leaderboard laporan performa
 │       └── admin.js        -> logika panel admin
 └── backend/            -> API + database
     ├── server.js
@@ -67,7 +69,9 @@ Kalau backend dan frontend jalan di alamat berbeda saat sudah online nanti, ubah
   - Lihat riwayat statistik pertandingan sendiri (Goal/Assist/Umpan/Rating, menang/kalah).
   - **Edit Profil** — ubah nama lengkap, IGN, role di game, dan URL foto sendiri. Perubahan ini langsung kelihatan di halaman Team (roster sekarang ambil data asli dari akun terdaftar lewat `js/team.js`, bukan data dummy lagi).
   - **Ganti Password** — wajib masukkan password lama dulu sebelum bisa ganti ke password baru.
-- **Input statistik pertandingan** (`staff-stats.html`) — hanya bisa diakses akun berstatus **staff/admin**. Kalau player login lalu buka halaman ini, langsung ditolak (dicek dua kali: di frontend lewat `/api/me`, dan di backend lewat middleware `staffOnly`). Di halaman ini staff pilih nama player dari dropdown (otomatis terisi dari roster), isi tanggal/lawan/hasil/Goal/Assist/Umpan/Rating, lalu langsung muncul di tabel "Statistik Terakhir Diinput" di bawahnya — lengkap dengan tombol **Edit** dan **Hapus** per baris.
+- **Input statistik pertandingan** (`staff-stats.html`) — hanya bisa diakses akun berstatus **staff/admin**. Kalau player login lalu buka halaman ini, langsung ditolak (dicek dua kali: di frontend lewat `/api/me`, dan di backend lewat middleware `staffOnly`). Di halaman ini staff pilih nama player dari dropdown (otomatis terisi dari roster), isi tanggal/lawan/hasil/Goal/Assist/Umpan — **Rating dihitung otomatis oleh sistem**, tidak diinput manual (lihat bagian "Rating otomatis" di bawah) — lalu langsung muncul di tabel "Statistik Terakhir Diinput" di bawahnya, lengkap dengan tombol **Edit** dan **Hapus** per baris.
+- **Laporan Performa** — di dashboard, tiap player/staff lihat laporan performa miliknya sendiri (skor keseluruhan, rata-rata rating, match diikuti, kehadiran latihan, total goal/assist/umpan), lengkap dengan **grafik tren rating per pertandingan** (line chart, pakai Chart.js). Staff/admin juga punya halaman **`reports.html`** ("Laporan Performa Tim") yang menampilkan leaderboard SEMUA player — kolom-kolomnya bisa **diklik buat sort** (naik/turun), default diurutkan dari skor tertinggi.
+- **Sidebar "Top Arrancar"** di halaman Home — leaderboard publik (tanpa perlu login) yang menampilkan 10 player dengan skor keseluruhan tertinggi. Sticky di sisi kanan pas discroll (di layar besar), pindah ke bawah konten utama di HP. Datanya dari endpoint publik `GET /api/reports/top10` — beda dari `/api/reports/all` yang cuma bisa diakses staff, ini sengaja dibuat publik tapi cuma nampilin field yang aman (nama, skor, rating, jumlah match — tanpa detail absen).
 - Link ke halaman ini otomatis muncul di `dashboard.html` (tombol "Input Statistik Player") kalau yang login akunnya staff/admin — player tidak akan melihat tombol ini sama sekali.
 - **Panel Admin** (`admin.html`) — khusus akun berstatus **admin** (dicek sama seperti di atas, tapi role harus persis `admin`, staff biasa tidak bisa masuk). Ada 4 tab:
   - **Event** — tambah/edit/hapus agenda yang tampil di section "Event Terdekat" di halaman Home.
@@ -89,6 +93,23 @@ Tidak ada tombol "daftar sebagai admin" di form registrasi (sengaja, biar orang 
      -d '{"username":"USERNAME","secret":"SECRET"}'
    ```
 4. Kalau berhasil, muncul `{"message":"USERNAME sekarang jadi admin"}`. Login ulang di website — tombol "Panel Admin" akan muncul di dashboard.
+
+### Rating otomatis & Laporan Performa
+
+Rating per pertandingan **tidak lagi diinput manual** — dihitung sistem lewat fungsi `calculateMatchRating()` di `backend/server.js`:
+
+```
+rating = 6.0 (dasar)
+       + goals   × 0.6
+       + assists × 0.4
+       + passes  × 0.02
+       + (menang ? +0.3 : -0.2)
+→ dibatasi 0-10, dibulatkan 1 desimal
+```
+
+Dihitung ulang otomatis tiap kali staff tambah atau edit statistik. Kalau bobotnya mau diubah (misalnya assist dianggap lebih berharga), tinggal ubah angka-angka di fungsi itu.
+
+**Skor Keseluruhan** (`overall_score`) di Laporan Performa = 70% rata-rata rating pertandingan + 30% persentase kehadiran latihan. Kalau player belum punya data pertandingan ATAU belum punya data absen sama sekali, bagian yang kosong itu diabaikan dari perhitungan (bukan dianggap nol) — logikanya ada di fungsi `buildPerformanceReport()`.
 
 ## 4. Deploy ke Railway
 
@@ -153,8 +174,11 @@ Ini starter yang sudah jalan dan sudah saya test end-to-end, tapi belum "product
 | GET | `/api/stats/me` | login | Statistik pertandingan sendiri |
 | GET | `/api/stats/all` | staff | Semua statistik yang sudah diinput (untuk halaman input) |
 | POST | `/api/stats` | staff | Input statistik untuk seorang player |
-| PUT | `/api/stats/:id` | staff | Edit statistik yang salah input |
+| PUT | `/api/stats/:id` | staff | Edit statistik (rating dihitung ulang otomatis) |
 | DELETE | `/api/stats/:id` | staff | Hapus statistik |
+| GET | `/api/reports/me` | login | Laporan performa (skor, rating, kehadiran) milik sendiri |
+| GET | `/api/reports/all` | staff | Leaderboard laporan performa semua player |
+| GET | `/api/reports/top10` | publik | Top 10 leaderboard ringkas (buat sidebar Home) |
 | GET | `/api/events` | publik | Daftar event/agenda (untuk landing page) |
 | POST | `/api/events` | admin | Tambah event |
 | PUT | `/api/events/:id` | admin | Edit event |

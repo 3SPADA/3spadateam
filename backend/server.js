@@ -210,9 +210,22 @@ app.get('/api/stats/all', authRequired, staffOnly, (req, res) => {
   res.json(rows);
 });
 
-// Staf/coach menambahkan statistik untuk seorang player setelah match
+// Menghitung rating pertandingan otomatis dari performa (goal, assist, umpan, menang/kalah).
+// Skala 0-10, dibulatkan 1 desimal. Formula bisa disesuaikan kalau nanti mau diubah bobotnya.
+function calculateMatchRating({ goals = 0, assists = 0, passes = 0, result }) {
+  let rating = 6.0; // rating dasar untuk performa rata-rata
+  rating += goals * 0.6;
+  rating += assists * 0.4;
+  rating += passes * 0.02;
+  rating += result === 'menang' ? 0.3 : -0.2;
+  rating = Math.max(0, Math.min(10, rating));
+  return Math.round(rating * 10) / 10;
+}
+
+// Staf/coach menambahkan statistik untuk seorang player setelah match.
+// Rating TIDAK diinput manual — dihitung otomatis oleh sistem dari goal/assist/umpan/hasil.
 app.post('/api/stats', authRequired, staffOnly, (req, res) => {
-  const { user_id, match_date, opponent, result, goals, assists, passes, rating } = req.body || {};
+  const { user_id, match_date, opponent, result, goals, assists, passes } = req.body || {};
   if (!user_id || !match_date || !opponent || !result) {
     return res.status(400).json({ error: 'Data pertandingan belum lengkap' });
   }
@@ -220,18 +233,22 @@ app.post('/api/stats', authRequired, staffOnly, (req, res) => {
     return res.status(400).json({ error: 'Hasil harus "menang" atau "kalah"' });
   }
 
+  const g = goals || 0, a = assists || 0, p = passes || 0;
+  const rating = calculateMatchRating({ goals: g, assists: a, passes: p, result });
+
   const info = db.prepare(`
     INSERT INTO match_stats (user_id, match_date, opponent, result, goals, assists, passes, rating)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(user_id, match_date, opponent, result, goals || 0, assists || 0, passes || 0, rating || 0);
+  `).run(user_id, match_date, opponent, result, g, a, p, rating);
 
-  res.status(201).json({ id: info.lastInsertRowid, message: 'Statistik tersimpan' });
+  res.status(201).json({ id: info.lastInsertRowid, rating, message: 'Statistik tersimpan, rating dihitung otomatis' });
 });
 
-// Staf mengedit statistik yang sudah pernah diinput (misal salah ketik)
+// Staf mengedit statistik yang sudah pernah diinput (misal salah ketik goal/assist).
+// Rating dihitung ULANG otomatis berdasarkan angka yang baru.
 app.put('/api/stats/:id', authRequired, staffOnly, (req, res) => {
   const { id } = req.params;
-  const { user_id, match_date, opponent, result, goals, assists, passes, rating } = req.body || {};
+  const { user_id, match_date, opponent, result, goals, assists, passes } = req.body || {};
 
   const existing = db.prepare('SELECT id FROM match_stats WHERE id = ?').get(id);
   if (!existing) return res.status(404).json({ error: 'Data statistik tidak ditemukan' });
@@ -243,13 +260,16 @@ app.put('/api/stats/:id', authRequired, staffOnly, (req, res) => {
     return res.status(400).json({ error: 'Hasil harus "menang" atau "kalah"' });
   }
 
+  const g = goals || 0, a = assists || 0, p = passes || 0;
+  const rating = calculateMatchRating({ goals: g, assists: a, passes: p, result });
+
   db.prepare(`
     UPDATE match_stats
     SET user_id = ?, match_date = ?, opponent = ?, result = ?, goals = ?, assists = ?, passes = ?, rating = ?
     WHERE id = ?
-  `).run(user_id, match_date, opponent, result, goals || 0, assists || 0, passes || 0, rating || 0, id);
+  `).run(user_id, match_date, opponent, result, g, a, p, rating, id);
 
-  res.json({ message: 'Statistik diperbarui' });
+  res.json({ message: 'Statistik diperbarui, rating dihitung ulang', rating });
 });
 
 // Staf menghapus statistik yang salah input
@@ -258,6 +278,113 @@ app.delete('/api/stats/:id', authRequired, staffOnly, (req, res) => {
   const info = db.prepare('DELETE FROM match_stats WHERE id = ?').run(id);
   if (info.changes === 0) return res.status(404).json({ error: 'Data statistik tidak ditemukan' });
   res.json({ message: 'Statistik dihapus' });
+});
+
+// ---------- LAPORAN PERFORMA (gabungan statistik pertandingan + kedisiplinan latihan) ----------
+function buildPerformanceReport(userId) {
+  const matchAgg = db.prepare(`
+    SELECT
+      COUNT(*) AS total_matches,
+      COALESCE(SUM(goals), 0) AS total_goals,
+      COALESCE(SUM(assists), 0) AS total_assists,
+      COALESCE(SUM(passes), 0) AS total_passes,
+      COALESCE(AVG(rating), 0) AS avg_rating,
+      COALESCE(SUM(CASE WHEN result = 'menang' THEN 1 ELSE 0 END), 0) AS wins,
+      COALESCE(SUM(CASE WHEN result = 'kalah' THEN 1 ELSE 0 END), 0) AS losses
+    FROM match_stats WHERE user_id = ?
+  `).get(userId);
+
+  const attendanceAgg = db.prepare(`
+    SELECT
+      COALESCE(SUM(CASE WHEN status = 'hadir' THEN 1 ELSE 0 END), 0) AS hadir,
+      COALESCE(SUM(CASE WHEN status = 'izin' THEN 1 ELSE 0 END), 0) AS izin,
+      COALESCE(SUM(CASE WHEN status = 'alpha' THEN 1 ELSE 0 END), 0) AS alpha,
+      COUNT(*) AS total_sesi
+    FROM attendance WHERE user_id = ?
+  `).get(userId);
+
+  const attendanceRate = attendanceAgg.total_sesi > 0
+    ? Math.round((attendanceAgg.hadir / attendanceAgg.total_sesi) * 1000) / 10
+    : null;
+
+  // Skor keseluruhan: 70% dari rata-rata rating pertandingan, 30% dari persentase kehadiran latihan.
+  // Kalau belum ada data pertandingan/absen sama sekali, skor keseluruhan tidak dihitung (null).
+  let overallScore = null;
+  if (matchAgg.total_matches > 0 || attendanceRate !== null) {
+    const ratingPart = matchAgg.total_matches > 0 ? matchAgg.avg_rating : 0;
+    const attendancePart = attendanceRate !== null ? attendanceRate / 10 : 0;
+    const ratingWeight = matchAgg.total_matches > 0 ? 0.7 : 0;
+    const attendanceWeight = attendanceRate !== null ? (matchAgg.total_matches > 0 ? 0.3 : 1) : 0;
+    overallScore = Math.round((ratingPart * ratingWeight + attendancePart * attendanceWeight) * 10) / 10;
+  }
+
+  return {
+    total_matches: matchAgg.total_matches,
+    wins: matchAgg.wins,
+    losses: matchAgg.losses,
+    total_goals: matchAgg.total_goals,
+    total_assists: matchAgg.total_assists,
+    total_passes: matchAgg.total_passes,
+    avg_rating: Math.round(matchAgg.avg_rating * 10) / 10,
+    attendance_hadir: attendanceAgg.hadir,
+    attendance_izin: attendanceAgg.izin,
+    attendance_alpha: attendanceAgg.alpha,
+    attendance_total_sesi: attendanceAgg.total_sesi,
+    attendance_rate: attendanceRate,
+    overall_score: overallScore
+  };
+}
+
+// Player/staff melihat laporan performa diri sendiri
+app.get('/api/reports/me', authRequired, (req, res) => {
+  res.json(buildPerformanceReport(req.user.id));
+});
+
+// Staf/admin melihat laporan performa SEMUA player (buat evaluasi tim)
+app.get('/api/reports/all', authRequired, staffOnly, (req, res) => {
+  const players = db.prepare(`
+    SELECT id, full_name, ign, game_role FROM users WHERE role = 'player' ORDER BY full_name ASC
+  `).all();
+
+  const report = players.map(p => ({
+    user_id: p.id,
+    full_name: p.full_name,
+    ign: p.ign,
+    game_role: p.game_role,
+    ...buildPerformanceReport(p.id)
+  }));
+
+  // Urutkan dari skor keseluruhan tertinggi (yang belum punya data taruh di bawah)
+  report.sort((a, b) => (b.overall_score ?? -1) - (a.overall_score ?? -1));
+
+  res.json(report);
+});
+
+// Leaderboard publik top 10 (buat sidebar "Top Arrancar" di landing page) — tanpa perlu login.
+// Cuma field yang aman ditampilkan ke publik (bukan data absen detail).
+app.get('/api/reports/top10', (req, res) => {
+  const players = db.prepare(`SELECT id, full_name, ign, game_role FROM users WHERE role = 'player'`).all();
+
+  const report = players.map(p => ({
+    full_name: p.full_name,
+    ign: p.ign,
+    game_role: p.game_role,
+    ...buildPerformanceReport(p.id)
+  }));
+
+  report.sort((a, b) => (b.overall_score ?? -1) - (a.overall_score ?? -1));
+
+  const top10 = report.slice(0, 10).map((r, i) => ({
+    rank: i + 1,
+    full_name: r.full_name,
+    ign: r.ign,
+    game_role: r.game_role,
+    overall_score: r.overall_score,
+    avg_rating: r.total_matches > 0 ? r.avg_rating : null,
+    total_matches: r.total_matches
+  }));
+
+  res.json(top10);
 });
 
 // ---------- EVENT (agenda di landing page) ----------

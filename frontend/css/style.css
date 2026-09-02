@@ -132,6 +132,36 @@ nav.menu a.cta-link:hover{ border-color:var(--blade); color:var(--blade); }
 .stat .num{ font-family:'IBM Plex Mono', monospace; font-size:30px; font-weight:600; color:var(--blade); }
 .stat .lbl{ color:var(--muted); font-size:13px; margin-top:4px; }
 
+/* ---------- HOME LAYOUT (main + sidebar) ---------- */
+.home-layout{ display:grid; grid-template-columns:1fr 320px; gap:56px; align-items:start; }
+.home-main .home-sub{ padding:64px 0; border-bottom:1px solid var(--line); }
+.home-main .home-sub:last-child{ border-bottom:none; }
+.home-sidebar{ position:sticky; top:96px; }
+
+.sidebar-card{
+  background:var(--ink-2); border:1px solid var(--line); padding:26px;
+  clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut));
+}
+.sidebar-card h3{ font-size:19px; margin-bottom:4px; }
+.sidebar-sub{ font-size:12px; color:var(--muted); margin:0 0 18px; font-family:'IBM Plex Mono', monospace; }
+
+.arrancar-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:14px; }
+.arrancar-item{ display:flex; align-items:center; gap:12px; }
+.arrancar-rank{
+  font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:22px; color:var(--muted);
+  width:32px; flex:none; text-align:center;
+}
+.arrancar-item.top .arrancar-rank{ color:var(--blade); }
+.arrancar-info{ flex:1; min-width:0; }
+.arrancar-name{ font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.arrancar-sub{ font-size:11px; color:var(--muted); font-family:'IBM Plex Mono', monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.arrancar-score{ font-family:'IBM Plex Mono', monospace; font-size:15px; color:var(--blade); font-weight:600; flex:none; }
+
+@media (max-width:960px){
+  .home-layout{ grid-template-columns:1fr; }
+  .home-sidebar{ position:static; }
+}
+
 /* ---------- SECTION ---------- */
 .section{ padding:80px 0; border-bottom:1px solid var(--line); position:relative; }
 .section:last-of-type{ border-bottom:none; }

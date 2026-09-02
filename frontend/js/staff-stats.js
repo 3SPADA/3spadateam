@@ -63,8 +63,7 @@ async function handleFormSubmit(e) {
     result: document.getElementById('stat-result').value,
     goals: Number(document.getElementById('stat-goals').value) || 0,
     assists: Number(document.getElementById('stat-assists').value) || 0,
-    passes: Number(document.getElementById('stat-passes').value) || 0,
-    rating: Number(document.getElementById('stat-rating').value) || 0
+    passes: Number(document.getElementById('stat-passes').value) || 0
   };
 
   const isEdit = !!editId;
@@ -80,7 +79,8 @@ async function handleFormSubmit(e) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Gagal menyimpan statistik');
 
-    showMsg(msg, isEdit ? 'Statistik diperbarui.' : 'Statistik tersimpan.', 'success');
+    const ratingMsg = data.rating !== undefined ? ` (rating: ${data.rating})` : '';
+    showMsg(msg, (isEdit ? 'Statistik diperbarui.' : 'Statistik tersimpan.') + ratingMsg, 'success');
     exitEditMode();
     await loadAllStats();
   } catch (err) {
@@ -97,7 +97,6 @@ function enterEditMode(row) {
   document.getElementById('stat-goals').value = row.goals;
   document.getElementById('stat-assists').value = row.assists;
   document.getElementById('stat-passes').value = row.passes;
-  document.getElementById('stat-rating').value = row.rating;
 
   document.getElementById('form-mode-title').textContent = 'Edit Statistik';
   document.getElementById('stats-submit-btn').textContent = 'Simpan Perubahan';

@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -39,6 +40,7 @@
           <p id="dash-role" style="margin-top:6px;">...</p>
         </div>
         <a href="staff-stats.html" id="link-staff-stats" class="hero-cta" style="display:none;">Input Statistik Player</a>
+        <a href="reports.html" id="link-reports" class="hero-cta" style="display:none; background:var(--ink-3); color:var(--paper); border:1px solid var(--line);">Laporan Performa Tim</a>
         <a href="admin.html" id="link-admin-panel" class="hero-cta" style="display:none;">Panel Admin</a>
       </div>
 
@@ -63,6 +65,28 @@
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div class="dash-card" style="margin-top:24px;">
+        <h3>Laporan Performa</h3>
+        <p style="font-size:13px; margin-bottom:16px;">Gabungan dari statistik pertandingan (70%) dan kedisiplinan absen latihan (30%).</p>
+        <div class="stat-row" style="margin-top:0;">
+          <div class="stat"><div class="num" id="rep-overall">-</div><div class="lbl">Skor Keseluruhan</div></div>
+          <div class="stat"><div class="num" id="rep-avg-rating">-</div><div class="lbl">Rata-rata Rating</div></div>
+          <div class="stat"><div class="num" id="rep-matches">-</div><div class="lbl">Match Diikuti</div></div>
+          <div class="stat"><div class="num" id="rep-attendance">-</div><div class="lbl">Kehadiran Latihan</div></div>
+        </div>
+        <div class="stat-row" style="margin-top:1px;">
+          <div class="stat"><div class="num mono" id="rep-wl">-</div><div class="lbl">Menang-Kalah</div></div>
+          <div class="stat"><div class="num" id="rep-goals">-</div><div class="lbl">Total Goal</div></div>
+          <div class="stat"><div class="num" id="rep-assists">-</div><div class="lbl">Total Assist</div></div>
+          <div class="stat"><div class="num" id="rep-passes">-</div><div class="lbl">Total Umpan</div></div>
+        </div>
+      </div>
+
+      <div class="dash-card">
+        <h3>Tren Rating per Pertandingan</h3>
+        <canvas id="rating-chart" height="90"></canvas>
       </div>
 
       <div class="dash-card">

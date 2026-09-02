@@ -72,4 +72,33 @@ function parseDateParts(isoDate) {
   } catch (err) {
     console.error('Gagal memuat hasil match:', err);
   }
+
+  // ---------- TOP ARRANCAR (leaderboard publik) ----------
+  try {
+    const res = await fetch(API_BASE + '/reports/top10');
+    const top10 = await res.json();
+    const list = document.getElementById('arrancar-list');
+
+    if (!res.ok || top10.length === 0) {
+      list.innerHTML = '<li style="color:var(--muted); font-size:13px;">Belum ada data performa player.</li>';
+    } else {
+      list.innerHTML = top10.map(p => {
+        const isTop = p.rank <= 3 ? ' top' : '';
+        const scoreText = p.overall_score !== null ? p.overall_score : '-';
+        const subText = [p.ign ? '@' + p.ign : null, p.game_role].filter(Boolean).join(' · ');
+        return `
+          <li class="arrancar-item${isTop}">
+            <div class="arrancar-rank">${String(p.rank).padStart(2, '0')}</div>
+            <div class="arrancar-info">
+              <div class="arrancar-name">${p.full_name}</div>
+              <div class="arrancar-sub">${subText || '-'}</div>
+            </div>
+            <div class="arrancar-score">${scoreText}</div>
+          </li>`;
+      }).join('');
+    }
+  } catch (err) {
+    const list = document.getElementById('arrancar-list');
+    if (list) list.innerHTML = '<li style="color:var(--loss); font-size:13px;">Gagal memuat peringkat.</li>';
+  }
 })();

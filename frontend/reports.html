@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laporan Performa — 3SPADA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .rank-badge{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:26px; height:26px; font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:600;
+    background:var(--ink-3); border:1px solid var(--line); color:var(--muted);
+  }
+  .rank-badge.top{ color:var(--blade); border-color:var(--blade); }
+  th.sortable{ cursor:pointer; user-select:none; }
+  th.sortable:hover{ color:var(--paper); }
+  th.sortable .arrow{ display:inline-block; margin-left:4px; color:var(--blade); font-size:11px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="navbar">
+    <a class="brand" href="home.html">
+      <svg class="brand-mark" viewBox="0 0 40 40" fill="none">
+        <path d="M20 3 L34 18 C38 22 36 30 28 31 C25 31.4 22.5 30 21 28 L21 34 L25 34 L25 37 L15 37 L15 34 L19 34 L19 28 C17.5 30 15 31.4 12 31 C4 30 2 22 6 18 Z" fill="#ff2e4d"/>
+      </svg>
+      <span class="brand-name">3<span>SPADA</span></span>
+    </a>
+    <nav class="menu" id="menu">
+      <a href="home.html">Home</a>
+      <a href="team.html">Team</a>
+      <a href="about.html">About Us</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="#" id="btn-logout" class="cta-link">Logout</a>
+    </nav>
+    <button class="burger" id="burger" aria-label="Buka menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<div id="reports-guard-msg" style="display:none;">
+  <div class="wrap" style="padding:96px 24px; text-align:center;">
+    <h2 style="font-size:28px;">Halaman ini khusus staff/admin</h2>
+    <p style="margin:12px auto 0;">Akun kamu bukan staff atau admin, jadi tidak bisa melihat laporan performa seluruh tim.</p>
+  </div>
+</div>
+
+<div id="reports-root" style="display:none;">
+  <section class="section" style="padding-top:56px;">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <div class="section-num">Evaluasi Tim</div>
+          <h2>Laporan Performa Player</h2>
+        </div>
+        <p>Skor keseluruhan = 70% rata-rata rating pertandingan + 30% persentase kehadiran latihan.</p>
+      </div>
+
+      <div class="dash-card">
+        <table class="stat-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th data-sort="full_name" class="sortable">Player</th>
+              <th data-sort="overall_score" class="sortable">Skor</th>
+              <th data-sort="avg_rating" class="sortable">Rata² Rating</th>
+              <th data-sort="total_matches" class="sortable">Match</th>
+              <th data-sort="wins" class="sortable">M-K</th>
+              <th data-sort="total_goals" class="sortable">Goal</th>
+              <th data-sort="total_assists" class="sortable">Assist</th>
+              <th data-sort="total_passes" class="sortable">Umpan</th>
+              <th data-sort="attendance_rate" class="sortable">Kehadiran</th>
+            </tr>
+          </thead>
+          <tbody id="reports-body">
+            <tr><td colspan="10" style="color:var(--muted)">Memuat...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <p>&copy; 2026 3SPADA Esport Community. Sambas, Kalimantan Barat.</p>
+    <p>Dibuat untuk komunitas, oleh komunitas.</p>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/main.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/reports.js"></script>
+</body>
+</html>

@@ -4,6 +4,25 @@ function saveToken(token){ localStorage.setItem('3spada_token', token); }
 function getToken(){ return localStorage.getItem('3spada_token'); }
 function clearToken(){ localStorage.removeItem('3spada_token'); }
 
+// Dipanggil di halaman login/register: kalau di tab/browser ini ternyata
+// sudah ada sesi login yang masih aktif, langsung lempar ke dashboard
+// tanpa perlu isi form lagi. Kalau token ternyata sudah kedaluwarsa/tidak
+// valid, dibersihkan diam-diam dan form login tetap tampil seperti biasa.
+async function redirectIfAlreadyLoggedIn() {
+  const token = getToken();
+  if (!token) return;
+  try {
+    const res = await fetch(API_BASE + '/me', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.ok) {
+      window.location.href = 'dashboard.html';
+    } else {
+      clearToken();
+    }
+  } catch (err) {
+    // Gagal cek (misalnya lagi offline) — biarkan saja, tampilkan form seperti biasa
+  }
+}
+
 function showMsg(el, text, type){
   el.textContent = text;
   el.className = 'form-msg ' + (type || '');
@@ -12,6 +31,8 @@ function showMsg(el, text, type){
 // ---------- REGISTER ----------
 const registerForm = document.getElementById('register-form');
 if (registerForm) {
+  redirectIfAlreadyLoggedIn();
+
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const msg = document.getElementById('register-msg');
@@ -42,6 +63,8 @@ if (registerForm) {
 // ---------- LOGIN ----------
 const loginForm = document.getElementById('login-form');
 if (loginForm) {
+  redirectIfAlreadyLoggedIn();
+
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const msg = document.getElementById('login-msg');
@@ -96,6 +119,8 @@ if (dashRoot) {
       if (me.role === 'staff' || me.role === 'admin') {
         const staffLink = document.getElementById('link-staff-stats');
         if (staffLink) staffLink.style.display = 'inline-flex';
+        const reportsLink = document.getElementById('link-reports');
+        if (reportsLink) reportsLink.style.display = 'inline-flex';
       }
       if (me.role === 'admin') {
         const adminLink = document.getElementById('link-admin-panel');
@@ -111,6 +136,8 @@ if (dashRoot) {
 
       await loadAttendanceHistory(authHeaders);
 
+      await loadPerformanceReport(authHeaders);
+
       // Riwayat statistik
       const statsRes = await fetch(API_BASE + '/stats/me', { headers: authHeaders });
       const stats = await statsRes.json();
@@ -125,6 +152,7 @@ if (dashRoot) {
           tbody.appendChild(tr);
         });
       }
+      renderRatingChart(stats);
     } catch (err) {
       console.error(err);
     }
@@ -220,5 +248,70 @@ async function handlePasswordSubmit(e, authHeaders) {
     document.getElementById('password-form').reset();
   } catch (err) {
     showMsg(msg, err.message, 'error');
+  }
+}
+
+function renderRatingChart(stats) {
+  const canvas = document.getElementById('rating-chart');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  if (stats.length === 0) {
+    canvas.style.display = 'none';
+    const note = document.createElement('p');
+    note.style.cssText = 'color:var(--muted); font-size:14px;';
+    note.textContent = 'Belum ada data statistik untuk ditampilkan.';
+    canvas.parentElement.appendChild(note);
+    return;
+  }
+
+  // stats datang urutan terbaru dulu (DESC) — dibalik biar grafik jalan dari kiri (lama) ke kanan (baru)
+  const chronological = [...stats].reverse();
+  const labels = chronological.map(s => s.match_date + ' vs ' + s.opponent);
+  const ratings = chronological.map(s => Number(s.rating));
+
+  new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Rating',
+        data: ratings,
+        borderColor: '#ff2e4d',
+        backgroundColor: 'rgba(255,46,77,0.15)',
+        tension: 0.25,
+        fill: true,
+        pointBackgroundColor: '#ff2e4d',
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min: 0, max: 10, ticks: { color: '#9a9aa4' }, grid: { color: '#2a2a31' } },
+        x: { ticks: { color: '#9a9aa4' }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+async function loadPerformanceReport(authHeaders) {
+  const overallEl = document.getElementById('rep-overall');
+  if (!overallEl) return;
+  try {
+    const res = await fetch(API_BASE + '/reports/me', { headers: authHeaders });
+    const r = await res.json();
+    if (!res.ok) throw new Error(r.error || 'Gagal memuat laporan');
+
+    document.getElementById('rep-overall').textContent = r.overall_score !== null ? r.overall_score : '-';
+    document.getElementById('rep-avg-rating').textContent = r.total_matches > 0 ? r.avg_rating : '-';
+    document.getElementById('rep-matches').textContent = r.total_matches;
+    document.getElementById('rep-attendance').textContent = r.attendance_rate !== null ? r.attendance_rate + '%' : '-';
+    document.getElementById('rep-wl').textContent = r.wins + '-' + r.losses;
+    document.getElementById('rep-goals').textContent = r.total_goals;
+    document.getElementById('rep-assists').textContent = r.total_assists;
+    document.getElementById('rep-passes').textContent = r.total_passes;
+  } catch (err) {
+    console.error('Gagal memuat laporan performa:', err);
   }
 }
