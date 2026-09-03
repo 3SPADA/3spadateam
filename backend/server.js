@@ -78,6 +78,20 @@ function adminOnly(req, res, next) {
   next();
 }
 
+// Cek URL cuma boleh http/https (atau mailto: kalau diizinkan), supaya field
+// seperti photo_url / link sosial tidak bisa diisi "javascript:..." (XSS).
+function isSafeUrl(value, { allowMailto = false } = {}) {
+  if (!value) return true; // kosong/null tetap boleh, itu ditangani validasi wajib-isi terpisah
+  try {
+    const url = new URL(value);
+    if (url.protocol === 'http:' || url.protocol === 'https:') return true;
+    if (allowMailto && url.protocol === 'mailto:') return true;
+    return false;
+  } catch {
+    return false; // bukan URL absolut yang valid
+  }
+}
+
 // ---------- REGISTER ----------
 app.post('/api/register', authLimiter, (req, res) => {
   const { username, password, full_name, ign, game_role, role } = req.body || {};
@@ -142,6 +156,9 @@ app.put('/api/me', authRequired, (req, res) => {
   const { full_name, ign, game_role, photo_url } = req.body || {};
   if (!full_name || !full_name.trim()) {
     return res.status(400).json({ error: 'Nama lengkap wajib diisi' });
+  }
+  if (photo_url && !isSafeUrl(photo_url)) {
+    return res.status(400).json({ error: 'Link foto harus URL http/https yang valid' });
   }
   db.prepare(`
     UPDATE users SET full_name = ?, ign = ?, game_role = ?, photo_url = ? WHERE id = ?
@@ -537,10 +554,19 @@ app.put('/api/content', authRequired, adminOnly, (req, res) => {
 
   const applied = [];
   for (const [key, value] of Object.entries(updates)) {
-    if (existingKeys.includes(key)) {
-      stmt.run(String(value), key);
-      applied.push(key);
+    if (!existingKeys.includes(key)) continue;
+
+    // Key yang berakhiran _url dipakai sebagai href di frontend (content.js),
+    // jadi wajib http/https (mailto: khusus buat contact_email_url) — cegah "javascript:" XSS.
+    if (key.endsWith('_url')) {
+      const strValue = String(value || '');
+      if (strValue && !isSafeUrl(strValue, { allowMailto: key === 'contact_email_url' })) {
+        return res.status(400).json({ error: `Nilai untuk "${key}" harus link http/https yang valid` });
+      }
     }
+
+    stmt.run(String(value), key);
+    applied.push(key);
   }
   res.json({ message: 'Teks landing page diperbarui', updated: applied });
 });
