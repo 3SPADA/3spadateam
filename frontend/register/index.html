@@ -49,19 +49,59 @@
         <input type="password" id="reg-password" required minlength="6" autocomplete="new-password">
       </div>
       <div class="field">
-        <label for="reg-type">Status</label>
-        <select id="reg-type">
-          <option value="player">Player</option>
-          <option value="staff">Staff</option>
-        </select>
+        <label>Status</label>
+        <div class="radio-group">
+          <span class="radio-pill">
+            <input type="radio" name="reg-type" id="reg-type-player" value="player" checked>
+            <label for="reg-type-player">Player</label>
+          </span>
+          <span class="radio-pill">
+            <input type="radio" name="reg-type" id="reg-type-staff" value="staff">
+            <label for="reg-type-staff">Staff</label>
+          </span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="reg-usia">Usia</label>
+        <input type="number" id="reg-usia" min="5" max="100" placeholder="Contoh: 19">
       </div>
       <div class="field">
         <label for="reg-ign">In-Game Name (IGN)</label>
         <input type="text" id="reg-ign" placeholder="Contoh: rzky.exp">
       </div>
       <div class="field">
-        <label for="reg-role">Role di Game</label>
-        <input type="text" id="reg-role" placeholder="Contoh: EXP Laner, Coach, Manager">
+        <label>Role</label>
+        <div class="radio-group">
+          <span class="radio-pill">
+            <input type="radio" name="reg-role" id="reg-role-gk" value="GK">
+            <label for="reg-role-gk">GK</label>
+          </span>
+          <span class="radio-pill">
+            <input type="radio" name="reg-role" id="reg-role-cb" value="CB">
+            <label for="reg-role-cb">CB</label>
+          </span>
+          <span class="radio-pill">
+            <input type="radio" name="reg-role" id="reg-role-wf" value="WF">
+            <label for="reg-role-wf">WF</label>
+          </span>
+          <span class="radio-pill">
+            <input type="radio" name="reg-role" id="reg-role-st" value="ST">
+            <label for="reg-role-st">ST</label>
+          </span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Rank</label>
+        <div class="radio-group">
+          <span class="radio-pill">
+            <input type="radio" name="reg-rank" id="reg-rank-pro" value="PRO">
+            <label for="reg-rank-pro">PRO</label>
+          </span>
+          <span class="radio-pill">
+            <input type="radio" name="reg-rank" id="reg-rank-wc" value="WORLD CLASS">
+            <label for="reg-rank-wc">WORLD CLASS</label>
+          </span>
+        </div>
       </div>
       <button type="submit" class="btn-primary">Daftar</button>
       <div class="form-msg" id="register-msg"></div>

@@ -272,6 +272,24 @@ nav.menu a.cta-link:hover{ border-color:var(--blade); color:var(--blade); }
 }
 .contact-strip a:hover{ border-color:var(--blade); color:var(--blade); }
 
+/* ---------- RADIO PILL ---------- */
+.radio-group{ display:flex; gap:10px; flex-wrap:wrap; }
+.radio-pill{ position:relative; }
+.radio-pill input[type="radio"]{
+  position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer;
+}
+.radio-pill label{
+  display:inline-flex; align-items:center; gap:6px;
+  border:1px solid var(--line); padding:10px 18px; cursor:pointer;
+  font-size:14px; color:var(--muted); font-family:'IBM Plex Sans', sans-serif;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+  transition:border-color .15s ease, color .15s ease;
+}
+.radio-pill input[type="radio"]:checked ~ label{
+  border-color:var(--blade); color:var(--paper); background:var(--ink-3);
+}
+.radio-pill input[type="radio"]:focus-visible ~ label{ outline:2px solid var(--blade); outline-offset:2px; }
+
 /* ---------- AUTH / DASHBOARD ---------- */
 .auth-wrap{ max-width:420px; margin:0 auto; padding:96px 24px; }
 .auth-card{

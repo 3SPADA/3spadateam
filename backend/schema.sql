@@ -6,7 +6,9 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   full_name TEXT NOT NULL,
   role TEXT NOT NULL CHECK(role IN ('player','staff','admin')) DEFAULT 'player',
-  game_role TEXT,             -- contoh: 'EXP Laner', 'Head Coach'
+  game_role TEXT,             -- posisi: 'GK', 'CB', 'WF', 'ST'
+  age INTEGER,                -- usia
+  rank_tier TEXT,             -- 'PRO' atau 'WORLD CLASS'
   ign TEXT,                   -- in-game name / username publik
   photo_url TEXT,
   joined_at TEXT DEFAULT (date('now')),

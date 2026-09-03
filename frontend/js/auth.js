@@ -36,13 +36,19 @@ if (registerForm) {
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const msg = document.getElementById('register-msg');
+    const roleRadio = document.querySelector('input[name="reg-role"]:checked');
+    const rankRadio = document.querySelector('input[name="reg-rank"]:checked');
+    const typeRadio = document.querySelector('input[name="reg-type"]:checked');
+    const usia = document.getElementById('reg-usia').value;
     const body = {
       full_name: document.getElementById('reg-name').value.trim(),
       username: document.getElementById('reg-username').value.trim(),
       password: document.getElementById('reg-password').value,
       ign: document.getElementById('reg-ign').value.trim(),
-      game_role: document.getElementById('reg-role').value,
-      role: document.getElementById('reg-type').value
+      game_role: roleRadio ? roleRadio.value : '',
+      rank: rankRadio ? rankRadio.value : '',
+      age: usia ? Number(usia) : null,
+      role: typeRadio ? typeRadio.value : 'player'
     };
     try {
       const res = await fetch(API_BASE + '/register', {
@@ -110,8 +116,16 @@ if (dashRoot) {
       // Isi form Edit Profil dengan data saat ini
       document.getElementById('profile-name').value = me.full_name || '';
       document.getElementById('profile-ign').value = me.ign || '';
-      document.getElementById('profile-role').value = me.game_role || '';
+      document.getElementById('profile-usia').value = me.age || '';
       document.getElementById('profile-photo').value = me.photo_url || '';
+      if (me.game_role) {
+        const roleInput = document.querySelector(`input[name="profile-role"][value="${me.game_role}"]`);
+        if (roleInput) roleInput.checked = true;
+      }
+      if (me.rank) {
+        const rankInput = document.querySelector(`input[name="profile-rank"][value="${me.rank}"]`);
+        if (rankInput) rankInput.checked = true;
+      }
 
       document.getElementById('profile-form').addEventListener('submit', (e) => handleProfileSubmit(e, authHeaders));
       document.getElementById('password-form').addEventListener('submit', (e) => handlePasswordSubmit(e, authHeaders));
@@ -207,10 +221,15 @@ let _currentRole = '';
 async function handleProfileSubmit(e, authHeaders) {
   e.preventDefault();
   const msg = document.getElementById('profile-form-msg');
+  const roleRadio = document.querySelector('input[name="profile-role"]:checked');
+  const rankRadio = document.querySelector('input[name="profile-rank"]:checked');
+  const usia = document.getElementById('profile-usia').value;
   const body = {
     full_name: document.getElementById('profile-name').value.trim(),
     ign: document.getElementById('profile-ign').value.trim(),
-    game_role: document.getElementById('profile-role').value.trim(),
+    game_role: roleRadio ? roleRadio.value : '',
+    rank: rankRadio ? rankRadio.value : '',
+    age: usia ? Number(usia) : null,
     photo_url: document.getElementById('profile-photo').value.trim()
   };
   try {

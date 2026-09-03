@@ -42,6 +42,7 @@ if (adminRoot) {
       await loadMatches();
       await loadSponsors();
       await loadContent();
+      await loadAccounts(_adminAuthHeaders);
     } catch (err) {
       console.error(err);
     }
@@ -421,6 +422,53 @@ async function handleContentSubmit(e) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Gagal menyimpan perubahan');
     showMsg(msg, 'Teks tersimpan. Cek halaman Home/Team/About Us untuk lihat hasilnya.', 'success');
+  } catch (err) {
+    showMsg(msg, err.message, 'error');
+  }
+}
+
+// ================= KELOLA AKUN =================
+async function loadAccounts(authHeaders) {
+  const tbody = document.getElementById('accounts-body');
+  try {
+    const res = await fetch(API_BASE + '/admin/users', { headers: authHeaders });
+    const rows = await res.json();
+    if (!res.ok) throw new Error(rows.error || 'Gagal memuat data akun');
+
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">Belum ada akun player/staff.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${escapeHtml(r.full_name)}</td>
+        <td>${escapeHtml(r.username)}</td>
+        <td>${r.role === 'staff' ? 'Staff' : 'Player'}</td>
+        <td>${escapeHtml(r.game_role || '-')}</td>
+        <td>${escapeHtml(r.rank || '-')}</td>
+        <td>${r.age || '-'}</td>
+        <td><button type="button" class="row-action delete" data-id="${r.id}" data-name="${escapeHtml(r.full_name)}">Hapus</button></td>
+      </tr>
+    `).join('');
+
+    tbody.querySelectorAll('.row-action.delete').forEach(btn => {
+      btn.addEventListener('click', () => handleAccountDelete(btn.dataset.id, btn.dataset.name, authHeaders));
+    });
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--loss)">Gagal memuat data.</td></tr>';
+  }
+}
+
+async function handleAccountDelete(id, name, authHeaders) {
+  if (!confirm(`Hapus akun "${name}"? Data absen dan statistik pertandingannya ikut terhapus. Tidak bisa dibatalkan.`)) return;
+  const msg = document.getElementById('accounts-msg');
+  try {
+    const res = await fetch(`${API_BASE}/admin/users/${id}`, { method: 'DELETE', headers: authHeaders });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal menghapus akun');
+    showMsg(msg, `Akun "${name}" dihapus.`, 'success');
+    await loadAccounts(authHeaders);
   } catch (err) {
     showMsg(msg, err.message, 'error');
   }

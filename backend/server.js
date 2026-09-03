@@ -78,29 +78,31 @@ function adminOnly(req, res, next) {
   next();
 }
 
-// Cek URL cuma boleh http/https (atau mailto: kalau diizinkan), supaya field
-// seperti photo_url / link sosial tidak bisa diisi "javascript:..." (XSS).
-function isSafeUrl(value, { allowMailto = false } = {}) {
-  if (!value) return true; // kosong/null tetap boleh, itu ditangani validasi wajib-isi terpisah
-  try {
-    const url = new URL(value);
-    if (url.protocol === 'http:' || url.protocol === 'https:') return true;
-    if (allowMailto && url.protocol === 'mailto:') return true;
-    return false;
-  } catch {
-    return false; // bukan URL absolut yang valid
-  }
-}
-
 // ---------- REGISTER ----------
+const VALID_GAME_ROLES = ['GK', 'CB', 'WF', 'ST'];
+const VALID_RANKS = ['PRO', 'WORLD CLASS'];
+
 app.post('/api/register', authLimiter, (req, res) => {
-  const { username, password, full_name, ign, game_role, role } = req.body || {};
+  const { username, password, full_name, ign, game_role, role, age, rank } = req.body || {};
 
   if (!username || !password || !full_name) {
     return res.status(400).json({ error: 'Nama, username, dan password wajib diisi' });
   }
   if (password.length < 6) {
     return res.status(400).json({ error: 'Password minimal 6 karakter' });
+  }
+  if (game_role && !VALID_GAME_ROLES.includes(game_role)) {
+    return res.status(400).json({ error: 'Role tidak valid' });
+  }
+  if (rank && !VALID_RANKS.includes(rank)) {
+    return res.status(400).json({ error: 'Rank tidak valid' });
+  }
+  let ageValue = null;
+  if (age !== undefined && age !== null && age !== '') {
+    ageValue = Number(age);
+    if (!Number.isInteger(ageValue) || ageValue < 5 || ageValue > 100) {
+      return res.status(400).json({ error: 'Usia tidak valid' });
+    }
   }
 
   const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
@@ -112,9 +114,9 @@ app.post('/api/register', authLimiter, (req, res) => {
   const finalRole = role === 'staff' ? 'staff' : 'player';
 
   const info = db.prepare(`
-    INSERT INTO users (username, password_hash, full_name, role, game_role, ign)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(username, password_hash, full_name, finalRole, game_role || null, ign || null);
+    INSERT INTO users (username, password_hash, full_name, role, game_role, ign, age, rank_tier)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(username, password_hash, full_name, finalRole, game_role || null, ign || null, ageValue, rank || null);
 
   res.status(201).json({ id: info.lastInsertRowid, message: 'Registrasi berhasil' });
 });
@@ -143,26 +145,37 @@ app.post('/api/login', authLimiter, (req, res) => {
 // ---------- PROFIL SENDIRI ----------
 app.get('/api/me', authRequired, (req, res) => {
   const user = db.prepare(`
-    SELECT id, username, full_name, role, game_role, ign, photo_url, joined_at
+    SELECT id, username, full_name, role, game_role, ign, photo_url, age, rank_tier AS rank, joined_at
     FROM users WHERE id = ?
   `).get(req.user.id);
   if (!user) return res.status(404).json({ error: 'User tidak ditemukan' });
   res.json(user);
 });
 
-// Player/staff mengubah profil sendiri (nama, IGN, role di game, foto).
-// Username dan role TIDAK bisa diubah lewat sini — role cuma lewat /api/admin/promote.
+// Player/staff mengubah profil sendiri (nama, IGN, role, usia, rank, foto).
+// Username dan role akun (player/staff/admin) TIDAK bisa diubah lewat sini — role cuma lewat /api/admin/promote.
 app.put('/api/me', authRequired, (req, res) => {
-  const { full_name, ign, game_role, photo_url } = req.body || {};
+  const { full_name, ign, game_role, photo_url, age, rank } = req.body || {};
   if (!full_name || !full_name.trim()) {
     return res.status(400).json({ error: 'Nama lengkap wajib diisi' });
   }
-  if (photo_url && !isSafeUrl(photo_url)) {
-    return res.status(400).json({ error: 'Link foto harus URL http/https yang valid' });
+  if (game_role && !VALID_GAME_ROLES.includes(game_role)) {
+    return res.status(400).json({ error: 'Role tidak valid' });
   }
+  if (rank && !VALID_RANKS.includes(rank)) {
+    return res.status(400).json({ error: 'Rank tidak valid' });
+  }
+  let ageValue = null;
+  if (age !== undefined && age !== null && age !== '') {
+    ageValue = Number(age);
+    if (!Number.isInteger(ageValue) || ageValue < 5 || ageValue > 100) {
+      return res.status(400).json({ error: 'Usia tidak valid' });
+    }
+  }
+
   db.prepare(`
-    UPDATE users SET full_name = ?, ign = ?, game_role = ?, photo_url = ? WHERE id = ?
-  `).run(full_name.trim(), ign || null, game_role || null, photo_url || null, req.user.id);
+    UPDATE users SET full_name = ?, ign = ?, game_role = ?, photo_url = ?, age = ?, rank_tier = ? WHERE id = ?
+  `).run(full_name.trim(), ign || null, game_role || null, photo_url || null, ageValue, rank || null, req.user.id);
   res.json({ message: 'Profil diperbarui' });
 });
 
@@ -187,12 +200,36 @@ app.put('/api/me/password', authRequired, (req, res) => {
 });
 
 // ---------- ROSTER PUBLIK (untuk halaman Team) ----------
+// Usia sengaja TIDAK diikutkan di sini (data pribadi, cuma kelihatan di /api/me sendiri).
 app.get('/api/roster', (req, res) => {
   const rows = db.prepare(`
-    SELECT id, full_name, role, game_role, ign, photo_url
+    SELECT id, full_name, role, game_role, rank_tier AS rank, ign, photo_url
     FROM users ORDER BY role DESC, full_name ASC
   `).all();
   res.json(rows);
+});
+
+// ---------- MANAJEMEN AKUN (admin) ----------
+// Admin melihat semua akun player/staff (buat kelola/hapus akun)
+app.get('/api/admin/users', authRequired, adminOnly, (req, res) => {
+  const rows = db.prepare(`
+    SELECT id, username, full_name, role, game_role, rank_tier AS rank, age, ign, joined_at
+    FROM users WHERE role IN ('player','staff') ORDER BY role DESC, full_name ASC
+  `).all();
+  res.json(rows);
+});
+
+// Admin menghapus akun player/staff. Data absen & statistik pemain itu ikut
+// terhapus otomatis (ON DELETE CASCADE). Akun admin tidak bisa dihapus lewat sini.
+app.delete('/api/admin/users/:id', authRequired, adminOnly, (req, res) => {
+  const { id } = req.params;
+  const target = db.prepare('SELECT role FROM users WHERE id = ?').get(id);
+  if (!target) return res.status(404).json({ error: 'Akun tidak ditemukan' });
+  if (target.role === 'admin') {
+    return res.status(403).json({ error: 'Akun admin tidak bisa dihapus lewat sini' });
+  }
+  db.prepare('DELETE FROM users WHERE id = ?').run(id);
+  res.json({ message: 'Akun dihapus' });
 });
 
 // ---------- ABSENSI ----------
@@ -554,19 +591,10 @@ app.put('/api/content', authRequired, adminOnly, (req, res) => {
 
   const applied = [];
   for (const [key, value] of Object.entries(updates)) {
-    if (!existingKeys.includes(key)) continue;
-
-    // Key yang berakhiran _url dipakai sebagai href di frontend (content.js),
-    // jadi wajib http/https (mailto: khusus buat contact_email_url) — cegah "javascript:" XSS.
-    if (key.endsWith('_url')) {
-      const strValue = String(value || '');
-      if (strValue && !isSafeUrl(strValue, { allowMailto: key === 'contact_email_url' })) {
-        return res.status(400).json({ error: `Nilai untuk "${key}" harus link http/https yang valid` });
-      }
+    if (existingKeys.includes(key)) {
+      stmt.run(String(value), key);
+      applied.push(key);
     }
-
-    stmt.run(String(value), key);
-    applied.push(key);
   }
   res.json({ message: 'Teks landing page diperbarui', updated: applied });
 });

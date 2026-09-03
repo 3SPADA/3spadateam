@@ -8,8 +8,23 @@ const Database = require('better-sqlite3');
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, '3spada.db');
 const db = new Database(DB_PATH);
 
+// Wajib diaktifkan biar ON DELETE CASCADE di schema.sql beneran jalan
+// (misal hapus user otomatis ikut hapus data absen & statistiknya).
+db.pragma('foreign_keys = ON');
+
 const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 db.exec(schema);
+
+// --- Migrasi kecil: tambah kolom age & rank_tier ke tabel users kalau belum ada
+// (buat database yang sudah pernah jalan sebelum fitur ini ditambahkan).
+// Pakai ADD COLUMN biasa (bukan drop+recreate), jadi akun yang sudah terdaftar aman.
+const userColumns = db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
+if (!userColumns.includes('age')) {
+  db.exec('ALTER TABLE users ADD COLUMN age INTEGER');
+}
+if (!userColumns.includes('rank_tier')) {
+  db.exec('ALTER TABLE users ADD COLUMN rank_tier TEXT');
+}
 
 // --- Migrasi kecil: kalau tabel match_stats masih pakai struktur lama
 // (kills/deaths/is_mvp), drop & buat ulang dengan struktur baru (goals/assists/passes/rating).

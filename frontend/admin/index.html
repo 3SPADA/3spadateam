@@ -77,6 +77,7 @@
         <button class="admin-tab" data-panel="matches">Hasil Pertandingan</button>
         <button class="admin-tab" data-panel="sponsors">Sponsor</button>
         <button class="admin-tab" data-panel="content">Teks Halaman</button>
+        <button class="admin-tab" data-panel="accounts">Kelola Akun</button>
       </div>
 
       <!-- ===== PANEL EVENT ===== -->
@@ -337,6 +338,19 @@
             <button type="submit" class="btn-primary">Simpan Semua Perubahan</button>
             <div class="form-msg" id="content-form-msg"></div>
           </form>
+        </div>
+      </div>
+
+      <!-- ===== PANEL KELOLA AKUN ===== -->
+      <div class="admin-panel" id="panel-accounts">
+        <div class="dash-card">
+          <h3>Semua Akun Player &amp; Staff</h3>
+          <p style="font-size:13px; margin-bottom:16px;">Hapus akun di sini kalau ada yang keluar dari tim. Data absen dan statistik pertandingan akun itu ikut terhapus otomatis. Akun admin tidak bisa dihapus dari sini.</p>
+          <div class="form-msg" id="accounts-msg"></div>
+          <table class="stat-table">
+            <thead><tr><th>Nama</th><th>Username</th><th>Status</th><th>Role</th><th>Rank</th><th>Usia</th><th>Aksi</th></tr></thead>
+            <tbody id="accounts-body"><tr><td colspan="7" style="color:var(--muted)">Memuat...</td></tr></tbody>
+          </table>
         </div>
       </div>
     </div>

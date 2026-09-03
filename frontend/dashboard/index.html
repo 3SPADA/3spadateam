@@ -114,8 +114,42 @@
               <input type="text" id="profile-ign">
             </div>
             <div class="field">
-              <label for="profile-role">Role di Game</label>
-              <input type="text" id="profile-role" placeholder="Contoh: EXP Laner, Coach, Manager">
+              <label for="profile-usia">Usia</label>
+              <input type="number" id="profile-usia" min="5" max="100">
+            </div>
+            <div class="field">
+              <label>Role</label>
+              <div class="radio-group">
+                <span class="radio-pill">
+                  <input type="radio" name="profile-role" id="profile-role-gk" value="GK">
+                  <label for="profile-role-gk">GK</label>
+                </span>
+                <span class="radio-pill">
+                  <input type="radio" name="profile-role" id="profile-role-cb" value="CB">
+                  <label for="profile-role-cb">CB</label>
+                </span>
+                <span class="radio-pill">
+                  <input type="radio" name="profile-role" id="profile-role-wf" value="WF">
+                  <label for="profile-role-wf">WF</label>
+                </span>
+                <span class="radio-pill">
+                  <input type="radio" name="profile-role" id="profile-role-st" value="ST">
+                  <label for="profile-role-st">ST</label>
+                </span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Rank</label>
+              <div class="radio-group">
+                <span class="radio-pill">
+                  <input type="radio" name="profile-rank" id="profile-rank-pro" value="PRO">
+                  <label for="profile-rank-pro">PRO</label>
+                </span>
+                <span class="radio-pill">
+                  <input type="radio" name="profile-rank" id="profile-rank-wc" value="WORLD CLASS">
+                  <label for="profile-rank-wc">WORLD CLASS</label>
+                </span>
+              </div>
             </div>
             <div class="field">
               <label for="profile-photo">URL Foto (opsional)</label>

@@ -22,7 +22,7 @@ function renderPlayerCard(p) {
     <div class="player-card">
       ${photo}
       <div class="player-info">
-        <div class="player-role">${escapeHtml((p.game_role || (p.role === 'staff' ? 'STAFF' : 'PLAYER')).toUpperCase())}</div>
+        <div class="player-role">${escapeHtml((p.game_role || (p.role === 'staff' ? 'STAFF' : 'PLAYER')).toUpperCase())}${p.rank ? ' · ' + escapeHtml(p.rank) : ''}</div>
         <div class="player-name">${safeName}</div>
         <div class="player-tag">${p.ign ? '@' + escapeHtml(p.ign) : ''}</div>
       </div>

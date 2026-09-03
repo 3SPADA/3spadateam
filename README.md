@@ -76,22 +76,23 @@ Kalau backend dan frontend jalan di alamat berbeda saat sudah online nanti, ubah
 
 ## 3. Alur fitur yang sudah jalan
 
-- **Registrasi** (`register/`) — player/staff daftar akun baru, password otomatis di-hash (bcrypt), tidak disimpan mentah.
+- **Registrasi** (`register/`) — player/staff daftar akun baru, password otomatis di-hash (bcrypt), tidak disimpan mentah. Field Status (Player/Staff) dan Role (GK/CB/WF/ST — posisi bermain) pakai **radio button**, Rank (PRO/WORLD CLASS) juga radio button, plus field Usia.
 - **Login** (`login/`) — dapat token (JWT) yang disimpan di browser, berlaku 7 hari.
 - **Dashboard** (`dashboard/`, wajib login):
   - Absen harian (Hadir/Izin) — satu status per orang per tanggal.
   - Lihat riwayat statistik pertandingan sendiri (Goal/Assist/Umpan/Rating, menang/kalah).
-  - **Edit Profil** — ubah nama lengkap, IGN, role di game, dan URL foto sendiri. Perubahan ini langsung kelihatan di halaman Team (roster sekarang ambil data asli dari akun terdaftar lewat `js/team.js`, bukan data dummy lagi).
+  - **Edit Profil** — ubah nama lengkap, IGN, Role (radio GK/CB/WF/ST), Rank (radio PRO/WORLD CLASS), Usia, dan URL foto sendiri. Perubahan ini langsung kelihatan di halaman Team (roster ambil data asli dari akun terdaftar lewat `js/team.js`).
   - **Ganti Password** — wajib masukkan password lama dulu sebelum bisa ganti ke password baru.
 - **Input statistik pertandingan** (`staff-stats/`) — hanya bisa diakses akun berstatus **staff/admin**. Kalau player login lalu buka halaman ini, langsung ditolak (dicek dua kali: di frontend lewat `/api/me`, dan di backend lewat middleware `staffOnly`). Di halaman ini staff pilih nama player dari dropdown (otomatis terisi dari roster), isi tanggal/lawan/hasil/Goal/Assist/Umpan — **Rating dihitung otomatis oleh sistem**, tidak diinput manual (lihat bagian "Rating otomatis" di bawah) — lalu langsung muncul di tabel "Statistik Terakhir Diinput" di bawahnya, lengkap dengan tombol **Edit** dan **Hapus** per baris.
 - **Laporan Performa** — di dashboard, tiap player/staff lihat laporan performa miliknya sendiri (skor keseluruhan, rata-rata rating, match diikuti, kehadiran latihan, total goal/assist/umpan), lengkap dengan **grafik tren rating per pertandingan** (line chart, pakai Chart.js). Staff/admin juga punya halaman **`reports/`** ("Laporan Performa Tim") yang menampilkan leaderboard SEMUA player — kolom-kolomnya bisa **diklik buat sort** (naik/turun), default diurutkan dari skor tertinggi.
 - **Sidebar "Top Arrancar"** di halaman Home — leaderboard publik (tanpa perlu login) yang menampilkan 10 player dengan skor keseluruhan tertinggi. Sticky di sisi kanan pas discroll (di layar besar), pindah ke bawah konten utama di HP. Datanya dari endpoint publik `GET /api/reports/top10` — beda dari `/api/reports/all` yang cuma bisa diakses staff, ini sengaja dibuat publik tapi cuma nampilin field yang aman (nama, skor, rating, jumlah match — tanpa detail absen).
 - Link ke halaman ini otomatis muncul di `dashboard/` (tombol "Input Statistik Player") kalau yang login akunnya staff/admin — player tidak akan melihat tombol ini sama sekali.
-- **Panel Admin** (`admin/`) — khusus akun berstatus **admin** (dicek sama seperti di atas, tapi role harus persis `admin`, staff biasa tidak bisa masuk). Ada 4 tab:
+- **Panel Admin** (`admin/`) — khusus akun berstatus **admin** (dicek sama seperti di atas, tapi role harus persis `admin`, staff biasa tidak bisa masuk). Ada 5 tab:
   - **Event** — tambah/edit/hapus agenda yang tampil di section "Event Terdekat" di halaman Home.
   - **Hasil Pertandingan** — tambah/edit/hapus hasil match tim yang tampil di section "Hasil Match Terakhir" di halaman Home.
   - **Sponsor** — tambah/edit/hapus sponsor yang tampil di section "Sponsorship" di halaman Home.
   - **Teks Halaman** — form untuk mengubah semua teks di halaman Home (hero, statistik ringkas, "Tentang Tim"), Team (judul & subjudul di atas roster), dan About Us (cerita tim, visi/misi/nilai, jejak singkat, link kontak) — tanpa perlu edit kode sama sekali.
+  - **Kelola Akun** — daftar semua akun player/staff (nama, username, role, rank, usia) dengan tombol **Hapus** per akun. Data absen dan statistik pertandingan akun itu ikut terhapus otomatis (cascade). Akun admin tidak bisa dihapus lewat sini (proteksi biar nggak ada yang salah pencet dan kehilangan akses admin).
 - Halaman `index.html` (Home), `team/`, dan `about/` sekarang mengambil semua teks dari API lewat `js/content.js` (dan `index.html` (Home) juga ambil event/sponsor/hasil match lewat `js/home.js`), jadi begitu admin simpan perubahan di panel admin, langsung kelihatan di halaman terkait (refresh halaman). Daftar player/staff di halaman Team tetap otomatis dari akun yang terdaftar, bukan dari panel admin.
 
 ### Cara bikin akun admin pertama
@@ -218,3 +219,5 @@ Ini starter yang sudah jalan dan sudah saya test end-to-end, tapi belum "product
 | GET | `/api/content` | publik | Semua teks halaman (home/team/about) |
 | PUT | `/api/content` | admin | Update teks halaman (kirim object key-value) |
 | POST | `/api/admin/promote` | secret khusus | Jadikan sebuah akun sebagai admin (dipakai sekali di awal) |
+| GET | `/api/admin/users` | admin | Daftar semua akun player/staff |
+| DELETE | `/api/admin/users/:id` | admin | Hapus akun player/staff (data absen & statistik ikut terhapus) |
