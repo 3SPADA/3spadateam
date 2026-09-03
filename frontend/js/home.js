@@ -1,4 +1,4 @@
-// Home.html sekarang mengambil event dan hasil match dari backend (teks umum
+// Halaman Home sekarang mengambil event dan hasil match dari backend (teks umum
 // ditangani oleh js/content.js yang dimuat bersama di halaman ini).
 
 const MONTH_SHORT_UPPER = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGU','SEP','OKT','NOV','DES'];
@@ -20,8 +20,8 @@ function parseDateParts(isoDate) {
     } else {
       strip.innerHTML = sponsors.map(s => `
         <div class="sponsor-tile">
-          <div class="mark">${s.name}</div>
-          <div class="kind">${s.kind || ''}</div>
+          <div class="mark">${escapeHtml(s.name)}</div>
+          <div class="kind">${escapeHtml(s.kind || '')}</div>
         </div>`).join('');
     }
   } catch (err) {
@@ -41,8 +41,8 @@ function parseDateParts(isoDate) {
         return `
           <div class="event-row">
             <div class="event-date">${day} ${MONTH_SHORT_UPPER[month]}<br>${year}</div>
-            <div><div class="event-name">${ev.name}</div><div class="event-loc">${ev.location || ''}</div></div>
-            <div class="event-tag">${ev.tag || ''}</div>
+            <div><div class="event-name">${escapeHtml(ev.name)}</div><div class="event-loc">${escapeHtml(ev.location || '')}</div></div>
+            <div class="event-tag">${escapeHtml(ev.tag || '')}</div>
           </div>`;
       }).join('');
     }
@@ -64,8 +64,8 @@ function parseDateParts(isoDate) {
         const badgeText = m.result === 'menang' ? 'MENANG' : 'KALAH';
         return `
           <div class="match-card">
-            <div><div class="match-opp">vs ${m.opponent}</div><div class="match-date">${day} ${MONTH_SHORT[month]} ${year}</div></div>
-            <div style="display:flex;align-items:center;gap:16px;"><span class="match-score">${m.score}</span><span class="badge ${badgeClass}">${badgeText}</span></div>
+            <div><div class="match-opp">vs ${escapeHtml(m.opponent)}</div><div class="match-date">${day} ${MONTH_SHORT[month]} ${year}</div></div>
+            <div style="display:flex;align-items:center;gap:16px;"><span class="match-score">${escapeHtml(m.score)}</span><span class="badge ${badgeClass}">${badgeText}</span></div>
           </div>`;
       }).join('');
     }
@@ -85,12 +85,12 @@ function parseDateParts(isoDate) {
       list.innerHTML = top10.map(p => {
         const isTop = p.rank <= 3 ? ' top' : '';
         const scoreText = p.overall_score !== null ? p.overall_score : '-';
-        const subText = [p.ign ? '@' + p.ign : null, p.game_role].filter(Boolean).join(' · ');
+        const subText = [p.ign ? '@' + escapeHtml(p.ign) : null, p.game_role ? escapeHtml(p.game_role) : null].filter(Boolean).join(' · ');
         return `
           <li class="arrancar-item${isTop}">
             <div class="arrancar-rank">${String(p.rank).padStart(2, '0')}</div>
             <div class="arrancar-info">
-              <div class="arrancar-name">${p.full_name}</div>
+              <div class="arrancar-name">${escapeHtml(p.full_name)}</div>
               <div class="arrancar-sub">${subText || '-'}</div>
             </div>
             <div class="arrancar-score">${scoreText}</div>

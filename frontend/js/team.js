@@ -13,17 +13,18 @@ function avatarColorFor(id) {
 }
 
 function renderPlayerCard(p) {
+  const safeName = escapeHtml(p.full_name);
   const photo = p.photo_url
-    ? `<img src="${p.photo_url}" alt="${p.full_name}" class="player-photo" style="width:100%; object-fit:cover;">`
-    : `<div class="player-photo" style="background:${avatarColorFor(p.id)};">${initialsFromName(p.full_name)}</div>`;
+    ? `<img src="${escapeHtml(p.photo_url)}" alt="${safeName}" class="player-photo" style="width:100%; object-fit:cover;">`
+    : `<div class="player-photo" style="background:${avatarColorFor(p.id)};">${escapeHtml(initialsFromName(p.full_name))}</div>`;
 
   return `
     <div class="player-card">
       ${photo}
       <div class="player-info">
-        <div class="player-role">${(p.game_role || (p.role === 'staff' ? 'STAFF' : 'PLAYER')).toUpperCase()}</div>
-        <div class="player-name">${p.full_name}</div>
-        <div class="player-tag">${p.ign ? '@' + p.ign : ''}</div>
+        <div class="player-role">${escapeHtml((p.game_role || (p.role === 'staff' ? 'STAFF' : 'PLAYER')).toUpperCase())}</div>
+        <div class="player-name">${safeName}</div>
+        <div class="player-tag">${p.ign ? '@' + escapeHtml(p.ign) : ''}</div>
       </div>
     </div>`;
 }

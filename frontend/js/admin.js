@@ -10,13 +10,13 @@ let _matchesCache = [];
 if (adminRoot) {
   (async () => {
     const token = getToken();
-    if (!token) { window.location.href = 'login.html'; return; }
+    if (!token) { window.location.href = '../login/'; return; }
 
     _adminAuthHeaders = { 'Authorization': 'Bearer ' + token };
 
     try {
       const meRes = await fetch(API_BASE + '/me', { headers: _adminAuthHeaders });
-      if (meRes.status === 401) { clearToken(); window.location.href = 'login.html'; return; }
+      if (meRes.status === 401) { clearToken(); window.location.href = '../login/'; return; }
       const me = await meRes.json();
 
       if (me.role !== 'admin') {
@@ -49,7 +49,7 @@ if (adminRoot) {
 
   document.getElementById('btn-logout')?.addEventListener('click', () => {
     clearToken();
-    window.location.href = 'login.html';
+    window.location.href = '../login/';
   });
 }
 
@@ -76,10 +76,10 @@ async function loadEvents() {
     }
     tbody.innerHTML = rows.map(r => `
       <tr>
-        <td>${r.event_date}</td>
-        <td>${r.name}</td>
-        <td>${r.location || '-'}</td>
-        <td>${r.tag || '-'}</td>
+        <td>${escapeHtml(r.event_date)}</td>
+        <td>${escapeHtml(r.name)}</td>
+        <td>${escapeHtml(r.location || '-')}</td>
+        <td>${escapeHtml(r.tag || '-')}</td>
         <td>
           <button type="button" class="row-action edit" data-id="${r.id}">Edit</button>
           <button type="button" class="row-action delete" data-id="${r.id}">Hapus</button>
@@ -182,9 +182,9 @@ async function loadMatches() {
     }
     tbody.innerHTML = rows.map(r => `
       <tr>
-        <td>${r.match_date}</td>
-        <td>${r.opponent}</td>
-        <td>${r.score}</td>
+        <td>${escapeHtml(r.match_date)}</td>
+        <td>${escapeHtml(r.opponent)}</td>
+        <td>${escapeHtml(r.score)}</td>
         <td>${r.result === 'menang' ? 'Menang' : 'Kalah'}</td>
         <td>
           <button type="button" class="row-action edit" data-id="${r.id}">Edit</button>
@@ -290,8 +290,8 @@ async function loadSponsors() {
     }
     tbody.innerHTML = rows.map(r => `
       <tr>
-        <td>${r.name}</td>
-        <td>${r.kind || '-'}</td>
+        <td>${escapeHtml(r.name)}</td>
+        <td>${escapeHtml(r.kind || '-')}</td>
         <td>
           <button type="button" class="row-action edit" data-id="${r.id}">Edit</button>
           <button type="button" class="row-action delete" data-id="${r.id}">Hapus</button>

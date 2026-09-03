@@ -9,13 +9,13 @@ let _statsCache = [];
 if (staffRoot) {
   (async () => {
     const token = getToken();
-    if (!token) { window.location.href = 'login.html'; return; }
+    if (!token) { window.location.href = '../login/'; return; }
 
     _authHeaders = { 'Authorization': 'Bearer ' + token };
 
     try {
       const meRes = await fetch(API_BASE + '/me', { headers: _authHeaders });
-      if (meRes.status === 401) { clearToken(); window.location.href = 'login.html'; return; }
+      if (meRes.status === 401) { clearToken(); window.location.href = '../login/'; return; }
       const me = await meRes.json();
 
       if (me.role !== 'staff' && me.role !== 'admin') {
@@ -30,7 +30,7 @@ if (staffRoot) {
       const players = roster.filter(r => r.role === 'player');
       const select = document.getElementById('stat-player');
       select.innerHTML = players.map(p =>
-        `<option value="${p.id}">${p.full_name}${p.ign ? ' — ' + p.ign : ''}</option>`
+        `<option value="${p.id}">${escapeHtml(p.full_name)}${p.ign ? ' — ' + escapeHtml(p.ign) : ''}</option>`
       ).join('');
 
       document.getElementById('stat-date').value = new Date().toISOString().slice(0, 10);
@@ -46,7 +46,7 @@ if (staffRoot) {
 
   document.getElementById('btn-logout')?.addEventListener('click', () => {
     clearToken();
-    window.location.href = 'login.html';
+    window.location.href = '../login/';
   });
 }
 
@@ -147,9 +147,9 @@ async function loadAllStats() {
     }
     tbody.innerHTML = rows.map(r => `
       <tr>
-        <td>${r.match_date}</td>
-        <td>${r.full_name}</td>
-        <td>${r.opponent}</td>
+        <td>${escapeHtml(r.match_date)}</td>
+        <td>${escapeHtml(r.full_name)}</td>
+        <td>${escapeHtml(r.opponent)}</td>
         <td>${r.result === 'menang' ? 'Menang' : 'Kalah'}</td>
         <td>${r.goals}</td>
         <td>${r.assists}</td>

@@ -2,11 +2,114 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=home.html">
-<title>3SPADA</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3SPADA — Esport Community</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<p>Mengalihkan ke <a href="home.html">halaman utama</a>...</p>
-<script>window.location.replace('home.html');</script>
+
+<header>
+  <div class="navbar">
+    <a class="brand" href="./">
+      <svg class="brand-mark" viewBox="0 0 40 40" fill="none">
+        <path d="M20 3 L34 18 C38 22 36 30 28 31 C25 31.4 22.5 30 21 28 L21 34 L25 34 L25 37 L15 37 L15 34 L19 34 L19 28 C17.5 30 15 31.4 12 31 C4 30 2 22 6 18 Z" fill="#ff2e4d"/>
+      </svg>
+      <span class="brand-name">3<span>SPADA</span></span>
+    </a>
+    <nav class="menu" id="menu">
+      <a href="./" class="active">Home</a>
+      <a href="team/">Team</a>
+      <a href="about/">About Us</a>
+      <a href="login/" class="cta-link">Login</a>
+    </nav>
+    <button class="burger" id="burger" aria-label="Buka menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-inner">
+    <div class="eyebrow-row"><span class="dot"></span> <span id="c-hero_eyebrow">Komunitas Esport &mdash; Kalimantan Barat</span></div>
+    <h1><span id="c-hero_title_line1">TIGA</span><br><span id="c-hero_title_line2">MATA</span><br><span class="accent" id="c-hero_title_accent">PEDANG.</span></h1>
+    <div class="hero-sub">
+      <p class="hero-tagline" id="c-hero_tagline">3SPADA lahir dari pertemanan tiga pemain yang menolak kalah diam-diam. Sekarang jadi rumah bagi pemain dan staf yang serius main, santai ngobrol.</p>
+      <a class="hero-cta" href="team/">Kenalan sama roster</a>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="num" id="c-stat_founded">2023</div><div class="lbl">Didirikan</div></div>
+      <div class="stat"><div class="num" id="c-stat_members">8</div><div class="lbl">Anggota aktif</div></div>
+      <div class="stat"><div class="num" id="c-stat_tournaments">14</div><div class="lbl">Turnamen diikuti</div></div>
+      <div class="stat"><div class="num mono" id="c-stat_record">9-5</div><div class="lbl">Rekor musim ini</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap home-layout">
+    <div class="home-main">
+
+      <div class="home-sub">
+        <div class="section-num">01 / Tentang Tim</div>
+        <h2 style="margin-top:10px;" id="c-intro_title">Dari Sambas, untuk arena</h2>
+        <p style="margin-top:20px;" id="c-intro_paragraph_1">3SPADA berawal dari mabar rutin tiga anak Sambas yang keterusan sampai ikut turnamen regional. Nama "Spada" kami ambil dari kata pedang &mdash; filosofinya sederhana, main harus tajam dan tenang, bukan asal agresif.</p>
+        <p id="c-intro_paragraph_2">Hari ini tim diisi lima pemain inti dan tiga staf pendukung, semua masih berstatus komunitas &mdash; belum ada yang jadi pro penuh waktu, tapi latihannya sudah seserius tim semi-pro.</p>
+        <div class="intro-card" style="margin-top:28px;">
+          <h3>Filosofi main</h3>
+          <p id="c-philosophy_text">Rotasi rapi, komunikasi pendek, dan nggak ada yang boleh nge-blame di voice chat pas lagi kalah. Evaluasi selalu habis pertandingan, bukan di tengah game.</p>
+        </div>
+      </div>
+
+      <div class="home-sub">
+        <div class="section-head">
+          <div><div class="section-num">02 / Didukung Oleh</div><h2>Sponsorship</h2></div>
+          <p>Mitra yang bantu operasional tim, dari internet sampai gizi pas bootcamp.</p>
+        </div>
+        <div class="sponsor-strip" id="sponsor-strip">
+          <div class="sponsor-tile"><div style="color:var(--muted)">Memuat sponsor...</div></div>
+        </div>
+      </div>
+
+      <div class="home-sub">
+        <div class="section-head"><div><div class="section-num">03 / Agenda</div><h2>Event Terdekat</h2></div></div>
+        <div class="event-list" id="event-list">
+          <div class="event-row"><div style="color:var(--muted)">Memuat agenda...</div></div>
+        </div>
+      </div>
+
+      <div class="home-sub">
+        <div class="section-head"><div><div class="section-num">04 / Rekap</div><h2>Hasil Match Terakhir</h2></div></div>
+        <div class="match-grid" id="match-grid">
+          <div class="match-card"><div style="color:var(--muted)">Memuat hasil match...</div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <aside class="home-sidebar">
+      <div class="sidebar-card">
+        <h3>⚔ Top Arrancar</h3>
+        <p class="sidebar-sub">Peringkat 1-10 berdasarkan skor performa keseluruhan</p>
+        <ol class="arrancar-list" id="arrancar-list">
+          <li style="color:var(--muted); font-size:13px;">Memuat peringkat...</li>
+        </ol>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <p>&copy; 2026 3SPADA Esport Community. Sambas, Kalimantan Barat.</p>
+    <p>Dibuat untuk komunitas, oleh komunitas.</p>
+  </div>
+</footer>
+
+<script src="js/anti-inspect.js"></script>
+<script src="js/config.js"></script>
+<script src="js/main.js"></script>
+<script src="js/content.js"></script>
+<script src="js/home.js"></script>
 </body>
 </html>

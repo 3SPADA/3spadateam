@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('./db');
@@ -8,6 +10,12 @@ const db = require('./db');
 const app = express();
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'ganti-secret-ini-di-file-.env';
+
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️  PERINGATAN: JWT_SECRET belum diset di environment variable. Pakai nilai default yang TIDAK aman untuk production. Set JWT_SECRET sebelum deploy ke publik.');
+}
+
+app.use(helmet());
 
 // CORS_ORIGIN bisa diisi satu atau beberapa domain dipisah koma, contoh:
 // CORS_ORIGIN=https://3spadateam.github.io,http://localhost:5500
@@ -17,6 +25,26 @@ app.use(cors({
   origin: allowedOrigins.length ? allowedOrigins : true
 }));
 app.use(express.json());
+
+// Batasi percobaan login/register biar nggak gampang di-brute-force.
+// 10 percobaan per 15 menit per alamat IP.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Terlalu banyak percobaan. Coba lagi dalam beberapa menit.' }
+});
+
+// Endpoint promote-admin dikunci lebih ketat lagi (5 percobaan per jam),
+// karena ini yang paling sensitif kalau secret-nya bocor/ketebak.
+const promoteLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Terlalu banyak percobaan. Coba lagi dalam 1 jam.' }
+});
 
 // Health check sederhana, dipakai Railway untuk cek servicenya hidup
 app.get('/', (req, res) => {
@@ -51,7 +79,7 @@ function adminOnly(req, res, next) {
 }
 
 // ---------- REGISTER ----------
-app.post('/api/register', (req, res) => {
+app.post('/api/register', authLimiter, (req, res) => {
   const { username, password, full_name, ign, game_role, role } = req.body || {};
 
   if (!username || !password || !full_name) {
@@ -78,7 +106,7 @@ app.post('/api/register', (req, res) => {
 });
 
 // ---------- LOGIN ----------
-app.post('/api/login', (req, res) => {
+app.post('/api/login', authLimiter, (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) {
     return res.status(400).json({ error: 'Username dan password wajib diisi' });
@@ -521,7 +549,7 @@ app.put('/api/content', authRequired, adminOnly, (req, res) => {
 // Dipakai SEKALI di awal untuk bikin akun admin pertama, lewat request manual (curl/Postman),
 // bukan lewat UI, supaya orang lain tidak bisa sembarangan jadi admin.
 // Wajib set ADMIN_SETUP_SECRET di environment variable dulu.
-app.post('/api/admin/promote', (req, res) => {
+app.post('/api/admin/promote', promoteLimiter, (req, res) => {
   const { username, secret } = req.body || {};
   const expectedSecret = process.env.ADMIN_SETUP_SECRET;
 

@@ -10,13 +10,13 @@ let _sortDir = 'desc'; // 'asc' | 'desc'
 if (reportsRoot) {
   (async () => {
     const token = getToken();
-    if (!token) { window.location.href = 'login.html'; return; }
+    if (!token) { window.location.href = '../login/'; return; }
 
     const authHeaders = { 'Authorization': 'Bearer ' + token };
 
     try {
       const meRes = await fetch(API_BASE + '/me', { headers: authHeaders });
-      if (meRes.status === 401) { clearToken(); window.location.href = 'login.html'; return; }
+      if (meRes.status === 401) { clearToken(); window.location.href = '../login/'; return; }
       const me = await meRes.json();
 
       if (me.role !== 'staff' && me.role !== 'admin') {
@@ -38,7 +38,7 @@ if (reportsRoot) {
 
   document.getElementById('btn-logout')?.addEventListener('click', () => {
     clearToken();
-    window.location.href = 'login.html';
+    window.location.href = '../login/';
   });
 }
 
@@ -99,7 +99,7 @@ function renderReportRows() {
     return `
       <tr>
         <td><span class="${badgeClass}">${rank}</span></td>
-        <td>${r.full_name}${r.ign ? ' <span style="color:var(--muted)">(' + r.ign + ')</span>' : ''}</td>
+        <td>${escapeHtml(r.full_name)}${r.ign ? ' <span style="color:var(--muted)">(' + escapeHtml(r.ign) + ')</span>' : ''}</td>
         <td>${r.overall_score !== null ? r.overall_score : '-'}</td>
         <td>${r.total_matches > 0 ? r.avg_rating : '-'}</td>
         <td>${r.total_matches}</td>

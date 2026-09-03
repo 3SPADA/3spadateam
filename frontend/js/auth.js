@@ -14,7 +14,7 @@ async function redirectIfAlreadyLoggedIn() {
   try {
     const res = await fetch(API_BASE + '/me', { headers: { 'Authorization': 'Bearer ' + token } });
     if (res.ok) {
-      window.location.href = 'dashboard.html';
+      window.location.href = '../dashboard/';
     } else {
       clearToken();
     }
@@ -53,7 +53,7 @@ if (registerForm) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registrasi gagal');
       showMsg(msg, 'Berhasil daftar! Mengalihkan ke login...', 'success');
-      setTimeout(() => { window.location.href = 'login.html'; }, 1200);
+      setTimeout(() => { window.location.href = '../login/'; }, 1200);
     } catch (err) {
       showMsg(msg, err.message, 'error');
     }
@@ -82,7 +82,7 @@ if (loginForm) {
       if (!res.ok) throw new Error(data.error || 'Login gagal');
       saveToken(data.token);
       showMsg(msg, 'Berhasil masuk! Mengalihkan...', 'success');
-      setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+      setTimeout(() => { window.location.href = '../dashboard/'; }, 800);
     } catch (err) {
       showMsg(msg, err.message, 'error');
     }
@@ -94,13 +94,13 @@ const dashRoot = document.getElementById('dashboard-root');
 if (dashRoot) {
   (async () => {
     const token = getToken();
-    if (!token) { window.location.href = 'login.html'; return; }
+    if (!token) { window.location.href = '../login/'; return; }
 
     const authHeaders = { 'Authorization': 'Bearer ' + token };
 
     try {
       const meRes = await fetch(API_BASE + '/me', { headers: authHeaders });
-      if (meRes.status === 401) { clearToken(); window.location.href = 'login.html'; return; }
+      if (meRes.status === 401) { clearToken(); window.location.href = '../login/'; return; }
       const me = await meRes.json();
 
       document.getElementById('dash-name').textContent = me.full_name;
@@ -148,7 +148,7 @@ if (dashRoot) {
       } else {
         stats.forEach(s => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${s.match_date}</td><td>${s.opponent}</td><td>${s.result === 'menang' ? 'Menang' : 'Kalah'}</td><td>${s.goals}</td><td>${s.assists}</td><td>${s.passes}</td><td>${Number(s.rating).toFixed(1)}</td>`;
+          tr.innerHTML = `<td>${escapeHtml(s.match_date)}</td><td>${escapeHtml(s.opponent)}</td><td>${s.result === 'menang' ? 'Menang' : 'Kalah'}</td><td>${s.goals}</td><td>${s.assists}</td><td>${s.passes}</td><td>${Number(s.rating).toFixed(1)}</td>`;
           tbody.appendChild(tr);
         });
       }
@@ -160,7 +160,7 @@ if (dashRoot) {
 
   document.getElementById('btn-logout')?.addEventListener('click', () => {
     clearToken();
-    window.location.href = 'login.html';
+    window.location.href = '../login/';
   });
 }
 
@@ -195,7 +195,7 @@ async function loadAttendanceHistory(authHeaders) {
     }
     const labelMap = { hadir: 'Hadir', izin: 'Izin', alpha: 'Alpha' };
     tbody.innerHTML = rows.map(r =>
-      `<tr><td>${r.session_date}</td><td>${labelMap[r.status] || r.status}</td></tr>`
+      `<tr><td>${escapeHtml(r.session_date)}</td><td>${escapeHtml(labelMap[r.status] || r.status)}</td></tr>`
     ).join('');
   } catch (err) {
     tbody.innerHTML = '<tr><td colspan="2" style="color:var(--loss)">Gagal memuat data.</td></tr>';
