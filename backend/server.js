@@ -24,7 +24,9 @@ const allowedOrigins = (process.env.CORS_ORIGIN || '').split(',').map(o => o.tri
 app.use(cors({
   origin: allowedOrigins.length ? allowedOrigins : true
 }));
-app.use(express.json());
+// Limit dinaikkan dari default (100kb) karena foto profil sekarang diupload
+// sebagai file dan dikirim ke server dalam bentuk base64 (butuh ruang lebih).
+app.use(express.json({ limit: '3mb' }));
 
 // Batasi percobaan login/register biar nggak gampang di-brute-force.
 // 10 percobaan per 15 menit per alamat IP.
@@ -597,6 +599,48 @@ app.put('/api/content', authRequired, adminOnly, (req, res) => {
     }
   }
   res.json({ message: 'Teks landing page diperbarui', updated: applied });
+});
+
+// ---------- PENGUMUMAN (buat player/staff) ----------
+// Siapa aja yang login (player/staff/admin) bisa baca. Cuma staff/admin yang bisa kelola.
+app.get('/api/announcements', authRequired, (req, res) => {
+  const rows = db.prepare(`
+    SELECT a.id, a.title, a.message, a.pinned, a.created_at, u.full_name AS created_by_name
+    FROM announcements a LEFT JOIN users u ON u.id = a.created_by
+    ORDER BY a.pinned DESC, a.created_at DESC
+  `).all();
+  res.json(rows);
+});
+
+app.post('/api/announcements', authRequired, staffOnly, (req, res) => {
+  const { title, message, pinned } = req.body || {};
+  if (!title || !title.trim() || !message || !message.trim()) {
+    return res.status(400).json({ error: 'Judul dan isi pengumuman wajib diisi' });
+  }
+  const info = db.prepare(`
+    INSERT INTO announcements (title, message, pinned, created_by) VALUES (?, ?, ?, ?)
+  `).run(title.trim(), message.trim(), pinned ? 1 : 0, req.user.id);
+  res.status(201).json({ id: info.lastInsertRowid, message: 'Pengumuman ditambahkan' });
+});
+
+app.put('/api/announcements/:id', authRequired, staffOnly, (req, res) => {
+  const { id } = req.params;
+  const { title, message, pinned } = req.body || {};
+  const existing = db.prepare('SELECT id FROM announcements WHERE id = ?').get(id);
+  if (!existing) return res.status(404).json({ error: 'Pengumuman tidak ditemukan' });
+  if (!title || !title.trim() || !message || !message.trim()) {
+    return res.status(400).json({ error: 'Judul dan isi pengumuman wajib diisi' });
+  }
+  db.prepare(`
+    UPDATE announcements SET title = ?, message = ?, pinned = ? WHERE id = ?
+  `).run(title.trim(), message.trim(), pinned ? 1 : 0, id);
+  res.json({ message: 'Pengumuman diperbarui' });
+});
+
+app.delete('/api/announcements/:id', authRequired, staffOnly, (req, res) => {
+  const info = db.prepare('DELETE FROM announcements WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Pengumuman tidak ditemukan' });
+  res.json({ message: 'Pengumuman dihapus' });
 });
 
 // ---------- SETUP AWAL: promosikan akun jadi admin ----------

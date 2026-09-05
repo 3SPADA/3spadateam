@@ -72,5 +72,15 @@ CREATE TABLE IF NOT EXISTS site_content (
   value TEXT
 );
 
+-- Pengumuman internal buat player/staff (dikelola staff/admin, dilihat semua yang login)
+CREATE TABLE IF NOT EXISTS announcements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  pinned INTEGER DEFAULT 0,            -- 0 = biasa, 1 = disematkan di paling atas
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_attendance_user ON attendance(user_id);
 CREATE INDEX IF NOT EXISTS idx_stats_user ON match_stats(user_id);

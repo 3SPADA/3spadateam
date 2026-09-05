@@ -117,7 +117,19 @@ if (dashRoot) {
       document.getElementById('profile-name').value = me.full_name || '';
       document.getElementById('profile-ign').value = me.ign || '';
       document.getElementById('profile-usia').value = me.age || '';
-      document.getElementById('profile-photo').value = me.photo_url || '';
+
+      // Foto profil: input sekarang type=file, tidak diisi lewat .value —
+      // cukup tampilkan preview foto yang sudah ada (kalau ada)
+      _currentPhotoUrl = me.photo_url || null;
+      if (_currentPhotoUrl) {
+        const preview = document.getElementById('profile-photo-preview');
+        preview.src = _currentPhotoUrl;
+        preview.style.display = 'block';
+      }
+      document.getElementById('profile-photo').addEventListener('change', function () {
+        handlePhotoFileChange(this);
+      });
+
       if (me.game_role) {
         const roleInput = document.querySelector(`input[name="profile-role"][value="${me.game_role}"]`);
         if (roleInput) roleInput.checked = true;
@@ -135,11 +147,15 @@ if (dashRoot) {
         if (staffLink) staffLink.style.display = 'inline-flex';
         const reportsLink = document.getElementById('link-reports');
         if (reportsLink) reportsLink.style.display = 'inline-flex';
+        const announcementsLink = document.getElementById('link-announcements');
+        if (announcementsLink) announcementsLink.style.display = 'inline-flex';
       }
       if (me.role === 'admin') {
         const adminLink = document.getElementById('link-admin-panel');
         if (adminLink) adminLink.style.display = 'inline-flex';
       }
+
+      await loadAnnouncements(authHeaders);
 
       // Absensi hari ini
       const today = new Date().toISOString().slice(0, 10);
@@ -217,6 +233,41 @@ async function loadAttendanceHistory(authHeaders) {
 }
 
 let _currentRole = '';
+let _currentPhotoUrl = null;
+
+// Batas ukuran file mentah sebelum dikonversi ke base64 (base64 bikin ukurannya
+// bengkak ~33%, jadi 1MB file asli jadi ~1.35MB pas dikirim ke server).
+const MAX_PHOTO_SIZE = 1 * 1024 * 1024;
+
+function handlePhotoFileChange(input) {
+  const file = input.files[0];
+  const msg = document.getElementById('profile-photo-msg');
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    showMsg(msg, 'File harus berupa gambar (JPG/PNG/dst).', 'error');
+    input.value = '';
+    return;
+  }
+  if (file.size > MAX_PHOTO_SIZE) {
+    showMsg(msg, 'Ukuran foto maksimal 1 MB. Coba kompres dulu atau pilih foto lain.', 'error');
+    input.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    _currentPhotoUrl = reader.result; // hasilnya string base64 data URL
+    const preview = document.getElementById('profile-photo-preview');
+    preview.src = _currentPhotoUrl;
+    preview.style.display = 'block';
+    showMsg(msg, 'Foto siap disimpan — klik "Simpan Profil" untuk menerapkan.', 'success');
+  };
+  reader.onerror = () => {
+    showMsg(msg, 'Gagal membaca file foto.', 'error');
+  };
+  reader.readAsDataURL(file);
+}
 
 async function handleProfileSubmit(e, authHeaders) {
   e.preventDefault();
@@ -230,7 +281,7 @@ async function handleProfileSubmit(e, authHeaders) {
     game_role: roleRadio ? roleRadio.value : '',
     rank: rankRadio ? rankRadio.value : '',
     age: usia ? Number(usia) : null,
-    photo_url: document.getElementById('profile-photo').value.trim()
+    photo_url: _currentPhotoUrl
   };
   try {
     const res = await fetch(API_BASE + '/me', {
@@ -332,5 +383,33 @@ async function loadPerformanceReport(authHeaders) {
     document.getElementById('rep-passes').textContent = r.total_passes;
   } catch (err) {
     console.error('Gagal memuat laporan performa:', err);
+  }
+}
+
+async function loadAnnouncements(authHeaders) {
+  const list = document.getElementById('announcements-list');
+  if (!list) return;
+  try {
+    const res = await fetch(API_BASE + '/announcements', { headers: authHeaders });
+    const rows = await res.json();
+    if (!res.ok) throw new Error(rows.error || 'Gagal memuat pengumuman');
+
+    if (rows.length === 0) {
+      list.innerHTML = '<p style="color:var(--muted); font-size:14px; margin:0;">Belum ada pengumuman.</p>';
+      return;
+    }
+
+    list.innerHTML = rows.map(a => `
+      <div class="announcement-item${a.pinned ? ' pinned' : ''}">
+        <div class="announcement-head">
+          <div class="announcement-title">${escapeHtml(a.title)}</div>
+          ${a.pinned ? '<span class="pin-badge">Disematkan</span>' : ''}
+        </div>
+        <p class="announcement-msg">${escapeHtml(a.message)}</p>
+        <div class="announcement-meta">${escapeHtml(a.created_by_name || 'Staff')} &middot; ${escapeHtml(a.created_at)}</div>
+      </div>
+    `).join('');
+  } catch (err) {
+    list.innerHTML = '<p style="color:var(--loss); font-size:14px; margin:0;">Gagal memuat pengumuman.</p>';
   }
 }

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kelola Pengumuman — 3SPADA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  .checkbox-field{ display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+  .checkbox-field input{ width:auto; }
+  .checkbox-field label{ margin:0; font-size:14px; color:var(--paper); font-family:'IBM Plex Sans',sans-serif; }
+  .row-action{
+    background:none; border:none; cursor:pointer; font-family:'IBM Plex Mono', monospace;
+    font-size:12px; padding:4px 8px; margin-right:4px;
+  }
+  .row-action.edit{ color:var(--muted); }
+  .row-action.edit:hover{ color:var(--paper); }
+  .row-action.delete{ color:var(--loss); }
+  .row-action.delete:hover{ opacity:0.75; }
+  textarea#anc-message{
+    width:100%; background:var(--ink); border:1px solid var(--line); color:var(--paper);
+    padding:12px 14px; font-family:'IBM Plex Sans', sans-serif; font-size:15px; resize:vertical; min-height:90px;
+  }
+  textarea#anc-message:focus{ border-color:var(--blade); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="navbar">
+    <a class="brand" href="../">
+      <svg class="brand-mark" viewBox="0 0 40 40" fill="none">
+        <path d="M20 3 L34 18 C38 22 36 30 28 31 C25 31.4 22.5 30 21 28 L21 34 L25 34 L25 37 L15 37 L15 34 L19 34 L19 28 C17.5 30 15 31.4 12 31 C4 30 2 22 6 18 Z" fill="#ff2e4d"/>
+      </svg>
+      <span class="brand-name">3<span>SPADA</span></span>
+    </a>
+    <nav class="menu" id="menu">
+      <a href="../">Home</a>
+      <a href="../team/">Team</a>
+      <a href="../about/">About Us</a>
+      <a href="../dashboard/">Dashboard</a>
+      <a href="#" id="btn-logout" class="cta-link">Logout</a>
+    </nav>
+    <button class="burger" id="burger" aria-label="Buka menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<div id="announcements-guard-msg" style="display:none;">
+  <div class="wrap" style="padding:96px 24px; text-align:center;">
+    <h2 style="font-size:28px;">Halaman ini khusus staff/admin</h2>
+    <p style="margin:12px auto 0;">Akun kamu bukan staff atau admin, jadi tidak bisa kelola pengumuman.</p>
+  </div>
+</div>
+
+<div id="announcements-root" style="display:none;">
+  <section class="section" style="padding-top:56px;">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <div class="section-num">Staff Panel</div>
+          <h2>Kelola Pengumuman</h2>
+        </div>
+        <p>Semua player/staff yang login bakal lihat pengumuman ini di dashboard mereka.</p>
+      </div>
+
+      <div class="dash-card" style="max-width:640px; margin-bottom:32px;">
+        <h3 id="anc-form-title" style="margin-bottom:14px;">Buat Pengumuman Baru</h3>
+        <form id="anc-form">
+          <input type="hidden" id="anc-edit-id" value="">
+          <div class="field">
+            <label for="anc-title">Judul</label>
+            <input type="text" id="anc-title" placeholder="Contoh: Latihan Diliburkan" required>
+          </div>
+          <div class="field">
+            <label for="anc-message">Isi Pengumuman</label>
+            <textarea id="anc-message" required></textarea>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="anc-pinned">
+            <label for="anc-pinned">Sematkan di paling atas</label>
+          </div>
+          <button type="submit" class="btn-primary" id="anc-submit-btn">Terbitkan</button>
+          <button type="button" class="btn-primary" id="anc-cancel-btn" style="display:none; background:var(--ink-3); color:var(--paper); border:1px solid var(--line); margin-top:10px;">Batal Edit</button>
+          <div class="form-msg" id="anc-form-msg"></div>
+        </form>
+      </div>
+
+      <div class="dash-card">
+        <h3>Semua Pengumuman</h3>
+        <div id="anc-list" style="margin-top:14px; display:flex; flex-direction:column; gap:16px;">
+          <p style="color:var(--muted); font-size:14px;">Memuat...</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <p>&copy; 2026 3SPADA Esport Community. Sambas, Kalimantan Barat.</p>
+    <p>Dibuat untuk komunitas, oleh komunitas.</p>
+  </div>
+</footer>
+
+<script src="../js/anti-inspect.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/announcements.js"></script>
+</body>
+</html>

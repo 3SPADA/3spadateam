@@ -14,5 +14,9 @@
     });
   } catch (err) {
     console.error('Gagal memuat teks halaman:', err);
+  } finally {
+    // Kasih tahu script lain (animate.js) kalau teks dari API sudah kepasang,
+    // biar animasi angka statistik pakai nilai yang benar, bukan placeholder HTML.
+    document.dispatchEvent(new CustomEvent('content-loaded'));
   }
 })();

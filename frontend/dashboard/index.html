@@ -40,8 +40,16 @@
           <p id="dash-role" style="margin-top:6px;">...</p>
         </div>
         <a href="../staff-stats/" id="link-staff-stats" class="hero-cta" style="display:none;">Input Statistik Player</a>
+        <a href="../announcements/" id="link-announcements" class="hero-cta" style="display:none; background:var(--ink-3); color:var(--paper); border:1px solid var(--line);">Kelola Pengumuman</a>
         <a href="../reports/" id="link-reports" class="hero-cta" style="display:none; background:var(--ink-3); color:var(--paper); border:1px solid var(--line);">Laporan Performa Tim</a>
         <a href="../admin/" id="link-admin-panel" class="hero-cta" style="display:none;">Panel Admin</a>
+      </div>
+
+      <div class="dash-card" style="margin-bottom:24px;">
+        <h3>📣 Pengumuman</h3>
+        <div id="announcements-list" style="margin-top:14px; display:flex; flex-direction:column; gap:14px;">
+          <p style="color:var(--muted); font-size:14px; margin:0;">Memuat pengumuman...</p>
+        </div>
       </div>
 
       <div class="dash-grid">
@@ -152,8 +160,13 @@
               </div>
             </div>
             <div class="field">
-              <label for="profile-photo">URL Foto (opsional)</label>
-              <input type="text" id="profile-photo" placeholder="https://...">
+              <label for="profile-photo">Foto Profil (opsional)</label>
+              <div style="display:flex; align-items:center; gap:14px;">
+                <img id="profile-photo-preview" src="" alt="" style="width:56px; height:56px; object-fit:cover; border:1px solid var(--line); display:none;">
+                <input type="file" id="profile-photo" accept="image/*">
+              </div>
+              <p style="font-size:12px; color:var(--muted); margin:6px 0 0;">Format JPG/PNG, maksimal 1 MB.</p>
+              <div class="form-msg" id="profile-photo-msg"></div>
             </div>
             <button type="submit" class="btn-primary">Simpan Profil</button>
             <div class="form-msg" id="profile-form-msg"></div>

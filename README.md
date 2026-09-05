@@ -12,6 +12,7 @@ Struktur project:
 │   ├── register/index.html  -> URL: /register/
 │   ├── dashboard/index.html -> URL: /dashboard/ (khusus anggota yang sudah login: absen + statistik)
 │   ├── staff-stats/index.html -> URL: /staff-stats/ (khusus staff/coach: input statistik player)
+│   ├── announcements/index.html -> URL: /announcements/ (khusus staff/admin: kelola pengumuman)
 │   ├── reports/index.html   -> URL: /reports/ (khusus staff/admin: leaderboard performa)
 │   ├── admin/index.html     -> URL: /admin/ (khusus admin: kelola event, hasil match, teks halaman)
 │   ├── css/style.css
@@ -25,6 +26,8 @@ Struktur project:
 │       ├── content.js       -> generic: isi teks halaman dari /api/content (dipakai home/team/about)
 │       ├── team.js          -> mengisi roster Team dari akun asli (GET /api/roster)
 │       ├── reports.js       -> logika halaman leaderboard laporan performa
+│       ├── animate.js       -> scroll-reveal & count-up angka statistik di Home
+│       ├── announcements.js -> logika halaman kelola pengumuman
 │       └── admin.js         -> logika panel admin
 └── backend/            -> API + database
     ├── server.js
@@ -81,8 +84,10 @@ Kalau backend dan frontend jalan di alamat berbeda saat sudah online nanti, ubah
 - **Dashboard** (`dashboard/`, wajib login):
   - Absen harian (Hadir/Izin) — satu status per orang per tanggal.
   - Lihat riwayat statistik pertandingan sendiri (Goal/Assist/Umpan/Rating, menang/kalah).
-  - **Edit Profil** — ubah nama lengkap, IGN, Role (radio GK/CB/WF/ST), Rank (radio PRO/WORLD CLASS), Usia, dan URL foto sendiri. Perubahan ini langsung kelihatan di halaman Team (roster ambil data asli dari akun terdaftar lewat `js/team.js`).
+  - **Edit Profil** — ubah nama lengkap, IGN, Role (radio GK/CB/WF/ST), Rank (radio PRO/WORLD CLASS), Usia, dan **foto profil** (upload file langsung dari device, dikonversi jadi base64 dan disimpan di database — bukan lagi "paste link URL", karena banyak link foto yang bukan link gambar langsung dan bikin gagal tampil). Maksimal 1 MB per foto. Perubahan ini langsung kelihatan di halaman Team (roster ambil data asli dari akun terdaftar lewat `js/team.js`).
   - **Ganti Password** — wajib masukkan password lama dulu sebelum bisa ganti ke password baru.
+  - **Pengumuman** — kartu di paling atas dashboard, nampilin pengumuman dari staff/admin (yang disematkan selalu di urutan paling atas).
+- **Kelola Pengumuman** (`announcements/`) — khusus staff/admin. Bikin/edit/hapus pengumuman, ada opsi "Sematkan di paling atas". Link ke halaman ini ("Kelola Pengumuman") muncul di dashboard staff/admin.
 - **Input statistik pertandingan** (`staff-stats/`) — hanya bisa diakses akun berstatus **staff/admin**. Kalau player login lalu buka halaman ini, langsung ditolak (dicek dua kali: di frontend lewat `/api/me`, dan di backend lewat middleware `staffOnly`). Di halaman ini staff pilih nama player dari dropdown (otomatis terisi dari roster), isi tanggal/lawan/hasil/Goal/Assist/Umpan — **Rating dihitung otomatis oleh sistem**, tidak diinput manual (lihat bagian "Rating otomatis" di bawah) — lalu langsung muncul di tabel "Statistik Terakhir Diinput" di bawahnya, lengkap dengan tombol **Edit** dan **Hapus** per baris.
 - **Laporan Performa** — di dashboard, tiap player/staff lihat laporan performa miliknya sendiri (skor keseluruhan, rata-rata rating, match diikuti, kehadiran latihan, total goal/assist/umpan), lengkap dengan **grafik tren rating per pertandingan** (line chart, pakai Chart.js). Staff/admin juga punya halaman **`reports/`** ("Laporan Performa Tim") yang menampilkan leaderboard SEMUA player — kolom-kolomnya bisa **diklik buat sort** (naik/turun), default diurutkan dari skor tertinggi.
 - **Sidebar "Top Arrancar"** di halaman Home — leaderboard publik (tanpa perlu login) yang menampilkan 10 player dengan skor keseluruhan tertinggi. Sticky di sisi kanan pas discroll (di layar besar), pindah ke bawah konten utama di HP. Datanya dari endpoint publik `GET /api/reports/top10` — beda dari `/api/reports/all` yang cuma bisa diakses staff, ini sengaja dibuat publik tapi cuma nampilin field yang aman (nama, skor, rating, jumlah match — tanpa detail absen).
@@ -125,6 +130,17 @@ rating = 6.0 (dasar)
 Dihitung ulang otomatis tiap kali staff tambah atau edit statistik. Kalau bobotnya mau diubah (misalnya assist dianggap lebih berharga), tinggal ubah angka-angka di fungsi itu.
 
 **Skor Keseluruhan** (`overall_score`) di Laporan Performa = 70% rata-rata rating pertandingan + 30% persentase kehadiran latihan. Kalau player belum punya data pertandingan ATAU belum punya data absen sama sekali, bagian yang kosong itu diabaikan dari perhitungan (bukan dianggap nol) — logikanya ada di fungsi `buildPerformanceReport()`.
+
+### UI Home: animasi & interaksi
+
+Halaman Home (`index.html`) punya dua animasi ringan, di `js/animate.js`:
+
+- **Scroll-reveal** — tiap section (Tentang Tim, Sponsorship, Event, Match, sidebar Top Arrancar) fade-in + geser dari bawah pas discroll sampai kelihatan. Munculnya bertahap satu-satu, bukan bareng semua.
+- **Count-up angka statistik** — angka di hero (Didirikan, Anggota Aktif, dst) "menghitung naik" dari 0 pas pertama kali kelihatan. Ini nunggu `content.js` selesai ambil angka asli dari API dulu (lewat event `content-loaded`) — supaya animasinya berhenti di angka yang benar, bukan di angka contoh yang ada di kode HTML.
+- Semua kartu (sponsor, event, match, player) punya efek hover halus (naik dikit + border merah).
+- Otomatis nonaktif kalau user set "prefers-reduced-motion" di OS/browser-nya (aksesibilitas).
+
+Kalau mau efek serupa dipasang juga di halaman Team/About Us, tinggal tambahkan `class="reveal"` ke elemen yang mau di-reveal dan pastikan `js/animate.js` ikut dimuat di halaman itu.
 
 ## 4. Deploy ke Railway
 
@@ -221,3 +237,7 @@ Ini starter yang sudah jalan dan sudah saya test end-to-end, tapi belum "product
 | POST | `/api/admin/promote` | secret khusus | Jadikan sebuah akun sebagai admin (dipakai sekali di awal) |
 | GET | `/api/admin/users` | admin | Daftar semua akun player/staff |
 | DELETE | `/api/admin/users/:id` | admin | Hapus akun player/staff (data absen & statistik ikut terhapus) |
+| GET | `/api/announcements` | login | Daftar pengumuman (disematkan tampil paling atas) |
+| POST | `/api/announcements` | staff | Buat pengumuman baru |
+| PUT | `/api/announcements/:id` | staff | Edit pengumuman |
+| DELETE | `/api/announcements/:id` | staff | Hapus pengumuman |
