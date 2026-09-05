@@ -26,6 +26,38 @@ if (!userColumns.includes('rank_tier')) {
   db.exec('ALTER TABLE users ADD COLUMN rank_tier TEXT');
 }
 
+// --- Migrasi: tambah role 'community' ke CHECK constraint tabel users.
+// SQLite tidak bisa ALTER CHECK constraint langsung, jadi tabelnya di-rebuild:
+// rename ke users_old -> buat users baru dengan constraint terbaru -> pindahin semua data -> hapus users_old.
+// Aman buat data yang sudah ada (cuma constraint-nya yang berubah, bukan datanya).
+const usersTableDef = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'").get();
+if (usersTableDef && !usersTableDef.sql.includes("'community'")) {
+  db.pragma('foreign_keys = OFF');
+  const migrate = db.transaction(() => {
+    db.exec(`
+      ALTER TABLE users RENAME TO users_old;
+      CREATE TABLE users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        full_name TEXT NOT NULL,
+        role TEXT NOT NULL CHECK(role IN ('player','staff','admin','community')) DEFAULT 'player',
+        game_role TEXT,
+        age INTEGER,
+        rank_tier TEXT,
+        ign TEXT,
+        photo_url TEXT,
+        joined_at TEXT DEFAULT (date('now')),
+        created_at TEXT DEFAULT (datetime('now'))
+      );
+      INSERT INTO users SELECT * FROM users_old;
+      DROP TABLE users_old;
+    `);
+  });
+  migrate();
+  db.pragma('foreign_keys = ON');
+}
+
 // --- Migrasi kecil: kalau tabel match_stats masih pakai struktur lama
 // (kills/deaths/is_mvp), drop & buat ulang dengan struktur baru (goals/assists/passes/rating).
 // Ini cuma menghapus data statistik pertandingan lama, tidak menyentuh users/attendance.
@@ -57,6 +89,10 @@ const defaults = {
   // Team page
   team_title: 'Player & Staff',
   team_subtitle: 'Delapan orang, satu voice channel, satu tujuan: naik divisi musim depan.',
+
+  // Community page
+  community_title: 'Member Komunitas',
+  community_subtitle: 'Bukan roster resmi, tapi tetap ikut dihitung di leaderboard Top Arrancar.',
 
   // About Us page
   about_eyebrow: 'Siapa kami',

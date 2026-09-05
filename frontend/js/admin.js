@@ -34,6 +34,8 @@ if (adminRoot) {
       document.getElementById('sponsor-form').addEventListener('submit', handleSponsorSubmit);
       document.getElementById('sponsor-cancel-btn').addEventListener('click', exitSponsorEditMode);
       document.getElementById('content-form').addEventListener('submit', handleContentSubmit);
+      document.getElementById('att-form').addEventListener('submit', handleAttSubmit);
+      document.getElementById('att-cancel-btn').addEventListener('click', exitAttEditMode);
 
       document.getElementById('event-date').value = new Date().toISOString().slice(0, 10);
       document.getElementById('match-date').value = new Date().toISOString().slice(0, 10);
@@ -43,6 +45,7 @@ if (adminRoot) {
       await loadSponsors();
       await loadContent();
       await loadAccounts(_adminAuthHeaders);
+      await loadAttendanceAdmin();
     } catch (err) {
       console.error(err);
     }
@@ -382,6 +385,7 @@ const CONTENT_KEYS = [
   'stat_founded', 'stat_members', 'stat_tournaments', 'stat_record',
   'intro_title', 'intro_paragraph_1', 'intro_paragraph_2', 'philosophy_text',
   'team_title', 'team_subtitle',
+  'community_title', 'community_subtitle',
   'about_eyebrow', 'about_paragraph_1', 'about_paragraph_2',
   'vision_text', 'mission_text', 'values_text',
   'timeline_2023_title', 'timeline_2023_desc',
@@ -444,7 +448,7 @@ async function loadAccounts(authHeaders) {
       <tr>
         <td>${escapeHtml(r.full_name)}</td>
         <td>${escapeHtml(r.username)}</td>
-        <td>${r.role === 'staff' ? 'Staff' : 'Player'}</td>
+        <td>${r.role === 'staff' ? 'Staff' : (r.role === 'community' ? 'Komunitas' : 'Player')}</td>
         <td>${escapeHtml(r.game_role || '-')}</td>
         <td>${escapeHtml(r.rank || '-')}</td>
         <td>${r.age || '-'}</td>
@@ -469,6 +473,154 @@ async function handleAccountDelete(id, name, authHeaders) {
     if (!res.ok) throw new Error(data.error || 'Gagal menghapus akun');
     showMsg(msg, `Akun "${name}" dihapus.`, 'success');
     await loadAccounts(authHeaders);
+  } catch (err) {
+    showMsg(msg, err.message, 'error');
+  }
+}
+
+// ================= KELOLA ABSENSI =================
+let _attCache = [];
+let _attMembersLoaded = false;
+
+async function loadAttMembersDropdown() {
+  if (_attMembersLoaded) return;
+  try {
+    const [rosterRes, communityRes] = await Promise.all([
+      fetch(API_BASE + '/roster'),
+      fetch(API_BASE + '/community-roster')
+    ]);
+    const roster = await rosterRes.json();
+    const community = (await communityRes.json()).map(c => ({ ...c, role: 'community' }));
+    const members = [...roster, ...community];
+    const select = document.getElementById('att-user');
+    select.innerHTML = members.map(m =>
+      `<option value="${m.id}">${escapeHtml(m.full_name)}${m.role === 'community' ? ' (Komunitas)' : ''}</option>`
+    ).join('');
+    _attMembersLoaded = true;
+  } catch (err) {
+    console.error('Gagal memuat daftar anggota buat absensi:', err);
+  }
+}
+
+async function loadAttendanceAdmin() {
+  await loadAttMembersDropdown();
+  document.getElementById('att-date').value = new Date().toISOString().slice(0, 10);
+
+  const tbody = document.getElementById('att-body');
+  try {
+    const res = await fetch(API_BASE + '/attendance/all', { headers: _adminAuthHeaders });
+    const rows = await res.json();
+    if (!res.ok) throw new Error(rows.error || 'Gagal memuat data absensi');
+
+    _attCache = rows;
+    const labelMap = { hadir: 'Hadir', izin: 'Izin', alpha: 'Alpha' };
+    const roleLabelMap = { player: 'Player', staff: 'Staff', admin: 'Admin', community: 'Komunitas' };
+
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted)">Belum ada data absensi.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${escapeHtml(r.session_date)}</td>
+        <td>${escapeHtml(r.full_name)}</td>
+        <td>${labelMap[r.status] || escapeHtml(r.status)}</td>
+        <td>${roleLabelMap[r.role] || escapeHtml(r.role)}</td>
+        <td>${escapeHtml(r.note || '-')}</td>
+        <td>
+          <button type="button" class="row-action edit" data-id="${r.id}">Edit</button>
+          <button type="button" class="row-action delete" data-id="${r.id}">Hapus</button>
+        </td>
+      </tr>
+    `).join('');
+
+    tbody.querySelectorAll('.row-action.edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = _attCache.find(r => String(r.id) === btn.dataset.id);
+        if (row) enterAttEditMode(row);
+      });
+    });
+    tbody.querySelectorAll('.row-action.delete').forEach(btn => {
+      btn.addEventListener('click', () => handleAttDelete(btn.dataset.id));
+    });
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--loss)">Gagal memuat data.</td></tr>';
+  }
+}
+
+async function handleAttSubmit(e) {
+  e.preventDefault();
+  const msg = document.getElementById('att-form-msg');
+  const editId = document.getElementById('att-edit-id').value;
+  const isEdit = !!editId;
+
+  const body = isEdit
+    ? {
+        session_date: document.getElementById('att-date').value,
+        status: document.getElementById('att-status').value,
+        note: document.getElementById('att-note').value.trim()
+      }
+    : {
+        user_id: Number(document.getElementById('att-user').value),
+        session_date: document.getElementById('att-date').value,
+        status: document.getElementById('att-status').value,
+        note: document.getElementById('att-note').value.trim()
+      };
+
+  const url = isEdit ? `${API_BASE}/admin/attendance/${editId}` : `${API_BASE}/admin/attendance`;
+  const method = isEdit ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', ..._adminAuthHeaders },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal menyimpan absensi');
+    showMsg(msg, isEdit ? 'Absensi diperbarui.' : 'Absensi tersimpan.', 'success');
+    exitAttEditMode();
+    await loadAttendanceAdmin();
+  } catch (err) {
+    showMsg(msg, err.message, 'error');
+  }
+}
+
+function enterAttEditMode(row) {
+  document.getElementById('att-edit-id').value = row.id;
+  document.getElementById('att-user').value = row.user_id;
+  document.getElementById('att-user').disabled = true;
+  document.getElementById('att-date').value = row.session_date;
+  document.getElementById('att-status').value = row.status;
+  document.getElementById('att-note').value = row.note || '';
+  document.getElementById('att-form-title').textContent = 'Edit Absen';
+  document.getElementById('att-submit-btn').textContent = 'Simpan Perubahan';
+  document.getElementById('att-cancel-btn').style.display = 'block';
+  document.getElementById('att-form-msg').textContent = '';
+  document.getElementById('att-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function exitAttEditMode() {
+  document.getElementById('att-form').reset();
+  document.getElementById('att-edit-id').value = '';
+  document.getElementById('att-user').disabled = false;
+  document.getElementById('att-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('att-form-title').textContent = 'Tambah/Koreksi Absen';
+  document.getElementById('att-submit-btn').textContent = 'Simpan Absen';
+  document.getElementById('att-cancel-btn').style.display = 'none';
+}
+
+async function handleAttDelete(id) {
+  if (!confirm('Hapus data absen ini?')) return;
+  const msg = document.getElementById('att-form-msg');
+  try {
+    const res = await fetch(`${API_BASE}/admin/attendance/${id}`, { method: 'DELETE', headers: _adminAuthHeaders });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal menghapus absensi');
+    showMsg(msg, 'Absensi dihapus.', 'success');
+    if (document.getElementById('att-edit-id').value == id) exitAttEditMode();
+    await loadAttendanceAdmin();
   } catch (err) {
     showMsg(msg, err.message, 'error');
   }

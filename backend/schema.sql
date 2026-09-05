@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   full_name TEXT NOT NULL,
-  role TEXT NOT NULL CHECK(role IN ('player','staff','admin')) DEFAULT 'player',
+  role TEXT NOT NULL CHECK(role IN ('player','staff','admin','community')) DEFAULT 'player',
   game_role TEXT,             -- posisi: 'GK', 'CB', 'WF', 'ST'
   age INTEGER,                -- usia
   rank_tier TEXT,             -- 'PRO' atau 'WORLD CLASS'

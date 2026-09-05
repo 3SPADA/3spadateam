@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login — 3SPADA</title>
+<title>Komunitas — 3SPADA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -22,40 +22,38 @@
     <nav class="menu" id="menu">
       <a href="../">Home</a>
       <a href="../team/">Team</a>
-      <a href="../community/">Komunitas</a>
+      <a href="../community/" class="active">Komunitas</a>
       <a href="../about/">About Us</a>
-      <a href="../login/" class="active cta-link">Login</a>
+      <a href="../login/" class="cta-link">Login</a>
     </nav>
     <button class="burger" id="burger" aria-label="Buka menu"><span></span><span></span><span></span></button>
   </div>
 </header>
 
-<div class="auth-wrap">
-  <div class="auth-card">
-    <div class="section-num">Masuk</div>
-    <h2 style="margin-top:8px; font-size:32px;">Login Anggota</h2>
-    <p style="margin-top:8px; font-size:14px;">Akses absensi latihan dan statistik pertandinganmu.</p>
+<section class="section" style="padding-top:56px;">
+  <div class="wrap">
+    <div class="section-head">
+      <div><div class="section-num">Komunitas</div><h2 id="c-community_title">Member Komunitas</h2></div>
+      <p id="c-community_subtitle">Bukan roster resmi, tapi tetap ikut dihitung di leaderboard Top Arrancar.</p>
+    </div>
 
-    <form id="login-form" style="margin-top:24px;">
-      <div class="field">
-        <label for="login-username">Username</label>
-        <input type="text" id="login-username" required autocomplete="username">
-      </div>
-      <div class="field">
-        <label for="login-password">Password</label>
-        <input type="password" id="login-password" required autocomplete="current-password">
-      </div>
-      <button type="submit" class="btn-primary">Login</button>
-      <div class="form-msg" id="login-msg"></div>
-    </form>
-
-    <div class="auth-switch">Belum punya akun? <a href="../register/">Daftar di sini</a></div>
+    <div class="roster-group active" id="roster-community">
+      <div class="player-card"><div style="color:var(--muted); padding:20px;">Memuat member komunitas...</div></div>
+    </div>
   </div>
-</div>
+</section>
+
+<footer>
+  <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+    <p>&copy; 2026 3SPADA Esport Community. Sambas, Kalimantan Barat.</p>
+    <p>Dibuat untuk komunitas, oleh komunitas.</p>
+  </div>
+</footer>
 
 <script src="../js/anti-inspect.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/main.js"></script>
-<script src="../js/auth.js"></script>
+<script src="../js/content.js"></script>
+<script src="../js/community.js"></script>
 </body>
 </html>

@@ -46,6 +46,7 @@
     <nav class="menu" id="menu">
       <a href="../">Home</a>
       <a href="../team/">Team</a>
+      <a href="../community/">Komunitas</a>
       <a href="../about/">About Us</a>
       <a href="../dashboard/">Dashboard</a>
       <a href="#" id="btn-logout" class="cta-link">Logout</a>
@@ -78,6 +79,7 @@
         <button class="admin-tab" data-panel="sponsors">Sponsor</button>
         <button class="admin-tab" data-panel="content">Teks Halaman</button>
         <button class="admin-tab" data-panel="accounts">Kelola Akun</button>
+        <button class="admin-tab" data-panel="attendance">Kelola Absensi</button>
       </div>
 
       <!-- ===== PANEL EVENT ===== -->
@@ -256,6 +258,17 @@
               <textarea id="cf-team_subtitle" rows="2"></textarea>
             </div>
 
+            <h3 style="margin:32px 0 4px;">Halaman Komunitas</h3>
+            <p style="font-size:13px; margin-bottom:18px;">Judul dan subjudul di atas daftar member komunitas (daftar member-nya sendiri otomatis dari akun berstatus Komunitas, bukan dari sini).</p>
+            <div class="field content-field">
+              <label for="cf-community_title">Judul halaman Komunitas</label>
+              <input type="text" id="cf-community_title">
+            </div>
+            <div class="field content-field">
+              <label for="cf-community_subtitle">Subjudul halaman Komunitas</label>
+              <textarea id="cf-community_subtitle" rows="2"></textarea>
+            </div>
+
             <h3 style="margin:32px 0 4px;">Halaman About Us</h3>
             <p style="font-size:13px; margin-bottom:18px;">Cerita tim, visi/misi/nilai, jejak singkat, dan link kontak.</p>
             <div class="field content-field">
@@ -350,6 +363,47 @@
           <table class="stat-table">
             <thead><tr><th>Nama</th><th>Username</th><th>Status</th><th>Role</th><th>Rank</th><th>Usia</th><th>Aksi</th></tr></thead>
             <tbody id="accounts-body"><tr><td colspan="7" style="color:var(--muted)">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== PANEL KELOLA ABSENSI ===== -->
+      <div class="admin-panel" id="panel-attendance">
+        <div class="dash-card" style="max-width:640px; margin-bottom:32px;">
+          <h3 id="att-form-title" style="margin-bottom:14px;">Tambah/Koreksi Absen</h3>
+          <form id="att-form">
+            <input type="hidden" id="att-edit-id" value="">
+            <div class="field">
+              <label for="att-user">Anggota</label>
+              <select id="att-user" required></select>
+            </div>
+            <div class="field">
+              <label for="att-date">Tanggal</label>
+              <input type="date" id="att-date" required>
+            </div>
+            <div class="field">
+              <label for="att-status">Status</label>
+              <select id="att-status" required>
+                <option value="hadir">Hadir</option>
+                <option value="izin">Izin</option>
+                <option value="alpha">Alpha</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="att-note">Catatan (opsional)</label>
+              <input type="text" id="att-note" placeholder="Contoh: sakit, izin keluarga">
+            </div>
+            <button type="submit" class="btn-primary" id="att-submit-btn">Simpan Absen</button>
+            <button type="button" class="btn-primary" id="att-cancel-btn" style="display:none; background:var(--ink-3); color:var(--paper); border:1px solid var(--line); margin-top:10px;">Batal Edit</button>
+            <div class="form-msg" id="att-form-msg"></div>
+          </form>
+        </div>
+
+        <div class="dash-card">
+          <h3>Rekap Absensi (200 terbaru)</h3>
+          <table class="stat-table">
+            <thead><tr><th>Tanggal</th><th>Nama</th><th>Status</th><th>Role</th><th>Catatan</th><th>Aksi</th></tr></thead>
+            <tbody id="att-body"><tr><td colspan="6" style="color:var(--muted)">Memuat...</td></tr></tbody>
           </table>
         </div>
       </div>

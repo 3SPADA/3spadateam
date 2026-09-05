@@ -25,12 +25,17 @@ if (staffRoot) {
 
       staffRoot.style.display = 'block';
 
-      const rosterRes = await fetch(API_BASE + '/roster');
+      // Player DAN member komunitas sama-sama bisa diinput statistiknya
+      const [rosterRes, communityRes] = await Promise.all([
+        fetch(API_BASE + '/roster'),
+        fetch(API_BASE + '/community-roster')
+      ]);
       const roster = await rosterRes.json();
-      const players = roster.filter(r => r.role === 'player');
+      const community = (await communityRes.json()).map(c => ({ ...c, role: 'community' }));
+      const players = [...roster.filter(r => r.role === 'player'), ...community];
       const select = document.getElementById('stat-player');
       select.innerHTML = players.map(p =>
-        `<option value="${p.id}">${escapeHtml(p.full_name)}${p.ign ? ' — ' + escapeHtml(p.ign) : ''}</option>`
+        `<option value="${p.id}">${escapeHtml(p.full_name)}${p.ign ? ' — ' + escapeHtml(p.ign) : ''}${p.role === 'community' ? ' (Komunitas)' : ''}</option>`
       ).join('');
 
       document.getElementById('stat-date').value = new Date().toISOString().slice(0, 10);

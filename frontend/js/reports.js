@@ -74,7 +74,7 @@ function renderReportRows() {
   updateSortArrows();
 
   if (_reportRows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" style="color:var(--muted)">Belum ada player terdaftar.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="color:var(--muted)">Belum ada player terdaftar.</td></tr>';
     return;
   }
 
@@ -100,6 +100,7 @@ function renderReportRows() {
       <tr>
         <td><span class="${badgeClass}">${rank}</span></td>
         <td>${escapeHtml(r.full_name)}${r.ign ? ' <span style="color:var(--muted)">(' + escapeHtml(r.ign) + ')</span>' : ''}</td>
+        <td>${r.role === 'community' ? 'Komunitas' : 'Player'}</td>
         <td>${r.overall_score !== null ? r.overall_score : '-'}</td>
         <td>${r.total_matches > 0 ? r.avg_rating : '-'}</td>
         <td>${r.total_matches}</td>

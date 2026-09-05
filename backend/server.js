@@ -113,7 +113,7 @@ app.post('/api/register', authLimiter, (req, res) => {
   }
 
   const password_hash = bcrypt.hashSync(password, 10);
-  const finalRole = role === 'staff' ? 'staff' : 'player';
+  const finalRole = ['staff', 'community'].includes(role) ? role : 'player';
 
   const info = db.prepare(`
     INSERT INTO users (username, password_hash, full_name, role, game_role, ign, age, rank_tier)
@@ -201,27 +201,36 @@ app.put('/api/me/password', authRequired, (req, res) => {
   res.json({ message: 'Password berhasil diganti' });
 });
 
-// ---------- ROSTER PUBLIK (untuk halaman Team) ----------
+// ---------- ROSTER PUBLIK (untuk halaman Team — player & staff saja) ----------
 // Usia sengaja TIDAK diikutkan di sini (data pribadi, cuma kelihatan di /api/me sendiri).
 app.get('/api/roster', (req, res) => {
   const rows = db.prepare(`
     SELECT id, full_name, role, game_role, rank_tier AS rank, ign, photo_url
-    FROM users ORDER BY role DESC, full_name ASC
+    FROM users WHERE role IN ('player','staff','admin') ORDER BY role DESC, full_name ASC
+  `).all();
+  res.json(rows);
+});
+
+// ---------- ROSTER KOMUNITAS (halaman terpisah dari Team) ----------
+app.get('/api/community-roster', (req, res) => {
+  const rows = db.prepare(`
+    SELECT id, full_name, game_role, rank_tier AS rank, ign, photo_url
+    FROM users WHERE role = 'community' ORDER BY full_name ASC
   `).all();
   res.json(rows);
 });
 
 // ---------- MANAJEMEN AKUN (admin) ----------
-// Admin melihat semua akun player/staff (buat kelola/hapus akun)
+// Admin melihat semua akun player/staff/komunitas (buat kelola/hapus akun)
 app.get('/api/admin/users', authRequired, adminOnly, (req, res) => {
   const rows = db.prepare(`
     SELECT id, username, full_name, role, game_role, rank_tier AS rank, age, ign, joined_at
-    FROM users WHERE role IN ('player','staff') ORDER BY role DESC, full_name ASC
+    FROM users WHERE role IN ('player','staff','community') ORDER BY role DESC, full_name ASC
   `).all();
   res.json(rows);
 });
 
-// Admin menghapus akun player/staff. Data absen & statistik pemain itu ikut
+// Admin menghapus akun player/staff/komunitas. Data absen & statistik ikut
 // terhapus otomatis (ON DELETE CASCADE). Akun admin tidak bisa dihapus lewat sini.
 app.delete('/api/admin/users/:id', authRequired, adminOnly, (req, res) => {
   const { id } = req.params;
@@ -266,11 +275,59 @@ app.get('/api/attendance/me', authRequired, (req, res) => {
 // Staf melihat rekap absen semua anggota
 app.get('/api/attendance/all', authRequired, staffOnly, (req, res) => {
   const rows = db.prepare(`
-    SELECT a.session_date, a.status, a.note, u.full_name, u.username
+    SELECT a.id, a.user_id, a.session_date, a.status, a.note, u.full_name, u.username, u.role
     FROM attendance a JOIN users u ON u.id = a.user_id
     ORDER BY a.session_date DESC LIMIT 200
   `).all();
   res.json(rows);
+});
+
+// ---------- KELOLA ABSENSI (admin) ----------
+// Admin menambahkan/mengoreksi absen buat siapa saja (bukan cuma diri sendiri) —
+// misal ada yang lupa absen atau salah pencet, admin bisa perbaiki manual.
+app.post('/api/admin/attendance', authRequired, adminOnly, (req, res) => {
+  const { user_id, session_date, status, note } = req.body || {};
+  if (!user_id || !session_date || !status) {
+    return res.status(400).json({ error: 'Anggota, tanggal, dan status wajib diisi' });
+  }
+  if (!['hadir', 'izin', 'alpha'].includes(status)) {
+    return res.status(400).json({ error: 'Status tidak valid' });
+  }
+  const target = db.prepare('SELECT id FROM users WHERE id = ?').get(user_id);
+  if (!target) return res.status(404).json({ error: 'Anggota tidak ditemukan' });
+
+  db.prepare(`
+    INSERT INTO attendance (user_id, session_date, status, note)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(user_id, session_date) DO UPDATE SET status = excluded.status, note = excluded.note
+  `).run(user_id, session_date, status, note || null);
+
+  res.status(201).json({ message: 'Absensi tersimpan' });
+});
+
+// Admin mengedit satu baris absen (misal salah tanggal/status)
+app.put('/api/admin/attendance/:id', authRequired, adminOnly, (req, res) => {
+  const { id } = req.params;
+  const { session_date, status, note } = req.body || {};
+  const existing = db.prepare('SELECT id FROM attendance WHERE id = ?').get(id);
+  if (!existing) return res.status(404).json({ error: 'Data absen tidak ditemukan' });
+  if (!session_date || !status) {
+    return res.status(400).json({ error: 'Tanggal dan status wajib diisi' });
+  }
+  if (!['hadir', 'izin', 'alpha'].includes(status)) {
+    return res.status(400).json({ error: 'Status tidak valid' });
+  }
+  db.prepare(`
+    UPDATE attendance SET session_date = ?, status = ?, note = ? WHERE id = ?
+  `).run(session_date, status, note || null, id);
+  res.json({ message: 'Absensi diperbarui' });
+});
+
+// Admin menghapus satu baris absen yang salah/duplikat
+app.delete('/api/admin/attendance/:id', authRequired, adminOnly, (req, res) => {
+  const info = db.prepare('DELETE FROM attendance WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Data absen tidak ditemukan' });
+  res.json({ message: 'Absensi dihapus' });
 });
 
 // ---------- STATISTIK PERTANDINGAN ----------
@@ -424,10 +481,10 @@ app.get('/api/reports/me', authRequired, (req, res) => {
   res.json(buildPerformanceReport(req.user.id));
 });
 
-// Staf/admin melihat laporan performa SEMUA player (buat evaluasi tim)
+// Staf/admin melihat laporan performa SEMUA player + komunitas (buat evaluasi tim)
 app.get('/api/reports/all', authRequired, staffOnly, (req, res) => {
   const players = db.prepare(`
-    SELECT id, full_name, ign, game_role FROM users WHERE role = 'player' ORDER BY full_name ASC
+    SELECT id, full_name, ign, game_role, role FROM users WHERE role IN ('player','community') ORDER BY full_name ASC
   `).all();
 
   const report = players.map(p => ({
@@ -435,6 +492,7 @@ app.get('/api/reports/all', authRequired, staffOnly, (req, res) => {
     full_name: p.full_name,
     ign: p.ign,
     game_role: p.game_role,
+    role: p.role,
     ...buildPerformanceReport(p.id)
   }));
 
@@ -445,9 +503,9 @@ app.get('/api/reports/all', authRequired, staffOnly, (req, res) => {
 });
 
 // Leaderboard publik top 10 (buat sidebar "Top Arrancar" di landing page) — tanpa perlu login.
-// Cuma field yang aman ditampilkan ke publik (bukan data absen detail).
+// Player DAN komunitas ikut dihitung. Cuma field yang aman ditampilkan ke publik (bukan data absen detail).
 app.get('/api/reports/top10', (req, res) => {
-  const players = db.prepare(`SELECT id, full_name, ign, game_role FROM users WHERE role = 'player'`).all();
+  const players = db.prepare(`SELECT id, full_name, ign, game_role FROM users WHERE role IN ('player','community')`).all();
 
   const report = players.map(p => ({
     full_name: p.full_name,
