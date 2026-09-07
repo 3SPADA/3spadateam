@@ -38,7 +38,6 @@ if (registerForm) {
     const msg = document.getElementById('register-msg');
     const roleRadio = document.querySelector('input[name="reg-role"]:checked');
     const rankRadio = document.querySelector('input[name="reg-rank"]:checked');
-    const typeRadio = document.querySelector('input[name="reg-type"]:checked');
     const usia = document.getElementById('reg-usia').value;
     const body = {
       full_name: document.getElementById('reg-name').value.trim(),
@@ -47,8 +46,9 @@ if (registerForm) {
       ign: document.getElementById('reg-ign').value.trim(),
       game_role: roleRadio ? roleRadio.value : '',
       rank: rankRadio ? rankRadio.value : '',
-      age: usia ? Number(usia) : null,
-      role: typeRadio ? typeRadio.value : 'player'
+      age: usia ? Number(usia) : null
+      // Status (Player/Staff/Komunitas) sengaja TIDAK dikirim dari sini —
+      // semua akun baru otomatis jadi 'community', naik status cuma lewat admin.
     };
     try {
       const res = await fetch(API_BASE + '/register', {

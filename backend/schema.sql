@@ -82,5 +82,14 @@ CREATE TABLE IF NOT EXISTS announcements (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- Prestasi/trophy tim, tampil di halaman Team (dikelola admin)
+CREATE TABLE IF NOT EXISTS achievements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,                 -- contoh: 'Juara 2 IEL Season 4'
+  description TEXT,                    -- detail singkat (opsional)
+  year TEXT,                           -- contoh: '2025'
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_attendance_user ON attendance(user_id);
 CREATE INDEX IF NOT EXISTS idx_stats_user ON match_stats(user_id);

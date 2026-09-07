@@ -323,6 +323,23 @@ nav.menu a.cta-link:hover{ border-color:var(--blade); color:var(--blade); }
 }
 .radio-pill input[type="radio"]:focus-visible ~ label{ outline:2px solid var(--blade); outline-offset:2px; }
 
+/* ---------- ACHIEVEMENT ---------- */
+.achievement-list{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+.achievement-card{
+  background:var(--ink-2); border:1px solid var(--line); padding:22px 24px;
+  display:flex; gap:18px; align-items:flex-start;
+  clip-path:polygon(var(--cut-sm) 0,100% 0,100% calc(100% - var(--cut-sm)),calc(100% - var(--cut-sm)) 100%,0 100%,0 var(--cut-sm));
+}
+.achievement-year{
+  font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:28px;
+  color:var(--blade); flex:none; min-width:56px;
+}
+.achievement-title{ font-size:16px; font-weight:600; margin-bottom:4px; }
+.achievement-desc{ font-size:13px; color:var(--muted); margin:0; }
+@media (max-width:640px){
+  .achievement-list{ grid-template-columns:1fr; }
+}
+
 /* ---------- PENGUMUMAN ---------- */
 .announcement-item{ border-left:2px solid var(--line); padding-left:16px; }
 .announcement-item.pinned{ border-left-color:var(--blade); }

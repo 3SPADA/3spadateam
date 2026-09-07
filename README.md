@@ -25,7 +25,7 @@ Struktur project:
 │       ├── staff-stats.js   -> logika halaman input statistik staff
 │       ├── home.js          -> mengisi event, sponsor, hasil match, leaderboard di Home
 │       ├── content.js       -> generic: isi teks halaman dari /api/content (dipakai home/team/about)
-│       ├── team.js          -> mengisi roster Team dari akun asli (GET /api/roster)
+│       ├── team.js          -> mengisi roster Team + achievement (GET /api/roster, /api/achievements)
 │       ├── community.js     -> mengisi roster Komunitas (GET /api/community-roster)
 │       ├── reports.js       -> logika halaman leaderboard laporan performa
 │       ├── animate.js       -> scroll-reveal & count-up angka statistik di Home
@@ -81,7 +81,7 @@ Kalau backend dan frontend jalan di alamat berbeda saat sudah online nanti, ubah
 
 ## 3. Alur fitur yang sudah jalan
 
-- **Registrasi** (`register/`) — player/staff/**komunitas** daftar akun baru, password otomatis di-hash (bcrypt), tidak disimpan mentah. Field Status (Player/Staff/**Komunitas**) dan Role (GK/CB/WF/ST — posisi bermain) pakai **radio button**, Rank (PRO/WORLD CLASS) juga radio button, plus field Usia.
+- **Registrasi** (`register/`) — siapa aja bisa daftar akun, password otomatis di-hash (bcrypt), tidak disimpan mentah. **Semua akun baru otomatis masuk sebagai "Komunitas"** — status Player atau Staff TIDAK bisa dipilih sendiri waktu daftar (dulu bisa, ini celah keamanan yang sudah ditutup: siapa aja bisa asal klaim jadi Staff dan dapat akses fitur staff). Naik status cuma bisa lewat promosi admin. Field Role (GK/CB/WF/ST — posisi bermain) dan Rank (PRO/WORLD CLASS) pakai radio button, plus field Usia.
 - **Login** (`login/`) — dapat token (JWT) yang disimpan di browser, berlaku 7 hari.
 - **Dashboard** (`dashboard/`, wajib login):
   - Absen harian (Hadir/Izin) — satu status per orang per tanggal.
@@ -94,13 +94,15 @@ Kalau backend dan frontend jalan di alamat berbeda saat sudah online nanti, ubah
 - **Laporan Performa** — di dashboard, tiap player/staff lihat laporan performa miliknya sendiri (skor keseluruhan, rata-rata rating, match diikuti, kehadiran latihan, total goal/assist/umpan), lengkap dengan **grafik tren rating per pertandingan** (line chart, pakai Chart.js). Staff/admin juga punya halaman **`reports/`** ("Laporan Performa Tim") yang menampilkan leaderboard SEMUA player — kolom-kolomnya bisa **diklik buat sort** (naik/turun), default diurutkan dari skor tertinggi.
 - **Sidebar "Top Arrancar"** di halaman Home — leaderboard publik (tanpa perlu login) yang menampilkan 10 orang dengan skor keseluruhan tertinggi, **gabungan dari player DAN komunitas**. Sticky di sisi kanan pas discroll (di layar besar), pindah ke bawah konten utama di HP. Datanya dari endpoint publik `GET /api/reports/top10` — beda dari `/api/reports/all` yang cuma bisa diakses staff, ini sengaja dibuat publik tapi cuma nampilin field yang aman (nama, skor, rating, jumlah match — tanpa detail absen).
 - **Halaman Komunitas** (`community/`) — publik, terpisah dari `/team/`. Nampilin akun yang daftar dengan status "Komunitas" (bukan roster resmi tim), tapi statistik pertandingan dan absen mereka tetap dihitung dan **ikut masuk leaderboard Top Arrancar** bareng player. Staff bisa input statistik buat member komunitas juga lewat `staff-stats/` (dropdown-nya gabungan player + komunitas, ditandai "(Komunitas)").
+- **Achievement** di halaman Team — daftar prestasi/trophy tim (judul, tahun, deskripsi opsional) di bawah roster, dikelola admin.
 - Link ke halaman ini otomatis muncul di `dashboard/` (tombol "Input Statistik Player") kalau yang login akunnya staff/admin — player tidak akan melihat tombol ini sama sekali.
-- **Panel Admin** (`admin/`) — khusus akun berstatus **admin** (dicek sama seperti di atas, tapi role harus persis `admin`, staff biasa tidak bisa masuk). Ada 6 tab:
+- **Panel Admin** (`admin/`) — khusus akun berstatus **admin** (dicek sama seperti di atas, tapi role harus persis `admin`, staff biasa tidak bisa masuk). Ada 7 tab:
   - **Event** — tambah/edit/hapus agenda yang tampil di section "Event Terdekat" di halaman Home.
   - **Hasil Pertandingan** — tambah/edit/hapus hasil match tim yang tampil di section "Hasil Match Terakhir" di halaman Home.
   - **Sponsor** — tambah/edit/hapus sponsor yang tampil di section "Sponsorship" di halaman Home.
-  - **Teks Halaman** — form untuk mengubah semua teks di halaman Home (hero, statistik ringkas, "Tentang Tim"), Team (judul & subjudul di atas roster), dan About Us (cerita tim, visi/misi/nilai, jejak singkat, link kontak) — tanpa perlu edit kode sama sekali.
-  - **Kelola Akun** — daftar semua akun player/staff/komunitas (nama, username, role, rank, usia) dengan tombol **Hapus** per akun. Data absen dan statistik pertandingan akun itu ikut terhapus otomatis (cascade). Akun admin tidak bisa dihapus lewat sini (proteksi biar nggak ada yang salah pencet dan kehilangan akses admin).
+  - **Achievement** — tambah/edit/hapus prestasi/trophy yang tampil di halaman Team.
+  - **Teks Halaman** — form untuk mengubah semua teks di halaman Home (hero, statistik ringkas, "Tentang Tim"), Team (judul & subjudul di atas roster), Komunitas (judul & subjudul), dan About Us (cerita tim, visi/misi/nilai, jejak singkat, link kontak) — tanpa perlu edit kode sama sekali.
+  - **Kelola Akun** — daftar semua akun player/staff/komunitas (nama, username, role, rank, usia). Kolom **"Ubah Status"** berupa dropdown Komunitas/Player/Staff — ini satu-satunya cara naikin status seseorang (nggak bisa dipilih sendiri waktu daftar), tiap ganti ada konfirmasi dulu. Tombol **Hapus** per akun — data absen dan statistik pertandingan akun itu ikut terhapus otomatis (cascade). Akun admin tidak bisa diubah statusnya atau dihapus lewat sini (proteksi biar nggak ada yang salah pencet dan kehilangan akses admin).
   - **Kelola Absensi** — rekap semua absen (200 terbaru), bisa **tambah absen manual** buat siapa saja (misal ada yang lupa absen), **edit** (koreksi tanggal/status/catatan yang salah), dan **hapus** (misal ada duplikat).
 - Halaman `index.html` (Home), `team/`, dan `about/` sekarang mengambil semua teks dari API lewat `js/content.js` (dan `index.html` (Home) juga ambil event/sponsor/hasil match lewat `js/home.js`), jadi begitu admin simpan perubahan di panel admin, langsung kelihatan di halaman terkait (refresh halaman). Daftar player/staff di halaman Team tetap otomatis dari akun yang terdaftar, bukan dari panel admin.
 
@@ -202,6 +204,17 @@ Ini starter yang sudah jalan dan sudah saya test end-to-end, tapi belum "product
 - Pasang Volume di Railway untuk database (lihat bagian Deploy di atas) — tanpa ini, data bisa hilang tiap deploy ulang.
 - Belum ada fitur reset password lewat email (kalau lupa password, sementara ini harus reset manual lewat database).
 
+### ⚠️ Riwayat bug penting: data akun ke-geser (sudah diperbaiki + ada perbaikan otomatis)
+
+Waktu fitur role "Komunitas" ditambahkan, migrasi tabel `users`-nya sempat pakai `INSERT INTO users SELECT * FROM users_old` (tanpa nama kolom eksplisit). Ini bug: kalau urutan kolom di tabel lama beda dari tabel baru, SQLite mindahin data berdasarkan **posisi**, bukan **nama** — akibatnya nilai `ign`, `photo_url`, `age`, `rank_tier`, `joined_at`, dan `created_at` ke-geser ke kolom yang salah (ini penyebab foto profil hilang dari halaman Team).
+
+Sudah diperbaiki di `backend/db.js`:
+1. Migrasinya sekarang pakai nama kolom eksplisit di `INSERT` (tidak akan pernah ke-geser lagi, apapun urutan kolomnya).
+2. Ada langkah **perbaikan otomatis, sekali jalan** yang mendeteksi database yang sempat kena bug ini dan mengembalikan nilainya ke kolom yang benar — jalan otomatis pas backend restart, ditandai lewat `PRAGMA user_version` biar tidak dobel-jalan.
+3. Sudah ditest: database yang kena bug, database fresh, dan database lama yang belum pernah migrasi — semuanya diverifikasi hasilnya benar.
+
+**Setelah update ini di-deploy, cek ulang data profil (foto, IGN, usia, rank) tiap akun** — kalau ada yang masih kelihatan aneh, edit ulang manual lewat halaman Edit Profil.
+
 ## 8. Daftar endpoint API
 
 | Method | Endpoint | Akses | Keterangan |
@@ -239,11 +252,16 @@ Ini starter yang sudah jalan dan sudah saya test end-to-end, tapi belum "product
 | POST | `/api/sponsors` | admin | Tambah sponsor |
 | PUT | `/api/sponsors/:id` | admin | Edit sponsor |
 | DELETE | `/api/sponsors/:id` | admin | Hapus sponsor |
+| GET | `/api/achievements` | publik | Daftar achievement/prestasi (untuk halaman Team) |
+| POST | `/api/achievements` | admin | Tambah achievement |
+| PUT | `/api/achievements/:id` | admin | Edit achievement |
+| DELETE | `/api/achievements/:id` | admin | Hapus achievement |
 | GET | `/api/content` | publik | Semua teks halaman (home/team/about) |
 | PUT | `/api/content` | admin | Update teks halaman (kirim object key-value) |
 | POST | `/api/admin/promote` | secret khusus | Jadikan sebuah akun sebagai admin (dipakai sekali di awal) |
 | GET | `/api/admin/users` | admin | Daftar semua akun player/staff |
 | DELETE | `/api/admin/users/:id` | admin | Hapus akun player/staff (data absen & statistik ikut terhapus) |
+| PUT | `/api/admin/users/:id/role` | admin | Ubah status akun (Komunitas/Player/Staff) — satu-satunya cara naik status |
 | GET | `/api/announcements` | login | Daftar pengumuman (disematkan tampil paling atas) |
 | POST | `/api/announcements` | staff | Buat pengumuman baru |
 | PUT | `/api/announcements/:id` | staff | Edit pengumuman |

@@ -85,7 +85,7 @@ const VALID_GAME_ROLES = ['GK', 'CB', 'WF', 'ST'];
 const VALID_RANKS = ['PRO', 'WORLD CLASS'];
 
 app.post('/api/register', authLimiter, (req, res) => {
-  const { username, password, full_name, ign, game_role, role, age, rank } = req.body || {};
+  const { username, password, full_name, ign, game_role, age, rank } = req.body || {};
 
   if (!username || !password || !full_name) {
     return res.status(400).json({ error: 'Nama, username, dan password wajib diisi' });
@@ -113,7 +113,10 @@ app.post('/api/register', authLimiter, (req, res) => {
   }
 
   const password_hash = bcrypt.hashSync(password, 10);
-  const finalRole = ['staff', 'community'].includes(role) ? role : 'player';
+  // Semua akun baru mulai sebagai 'community'. Naik jadi Player atau Staff
+  // HARUS lewat promosi admin (PUT /api/admin/users/:id/role) — tidak bisa
+  // dipilih sendiri waktu daftar, biar nggak ada yang asal klaim jadi player/staff.
+  const finalRole = 'community';
 
   const info = db.prepare(`
     INSERT INTO users (username, password_hash, full_name, role, game_role, ign, age, rank_tier)
@@ -241,6 +244,24 @@ app.delete('/api/admin/users/:id', authRequired, adminOnly, (req, res) => {
   }
   db.prepare('DELETE FROM users WHERE id = ?').run(id);
   res.json({ message: 'Akun dihapus' });
+});
+
+// Admin menaikkan/menurunkan status akun (Komunitas <-> Player <-> Staff).
+// Ini satu-satunya cara jadi Player/Staff — TIDAK bisa dipilih sendiri waktu daftar.
+// Naik jadi 'admin' tetap harus lewat /api/admin/promote (pakai secret terpisah).
+app.put('/api/admin/users/:id/role', authRequired, adminOnly, (req, res) => {
+  const { id } = req.params;
+  const { role } = req.body || {};
+  if (!['player', 'staff', 'community'].includes(role)) {
+    return res.status(400).json({ error: 'Role tidak valid' });
+  }
+  const target = db.prepare('SELECT role FROM users WHERE id = ?').get(id);
+  if (!target) return res.status(404).json({ error: 'Akun tidak ditemukan' });
+  if (target.role === 'admin') {
+    return res.status(403).json({ error: 'Role akun admin tidak bisa diubah lewat sini' });
+  }
+  db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, id);
+  res.json({ message: 'Status akun diperbarui' });
 });
 
 // ---------- ABSENSI ----------
@@ -632,6 +653,39 @@ app.delete('/api/sponsors/:id', authRequired, adminOnly, (req, res) => {
   const info = db.prepare('DELETE FROM sponsors WHERE id = ?').run(req.params.id);
   if (info.changes === 0) return res.status(404).json({ error: 'Sponsor tidak ditemukan' });
   res.json({ message: 'Sponsor dihapus' });
+});
+
+// ---------- ACHIEVEMENT (tampil di halaman Team) ----------
+app.get('/api/achievements', (req, res) => {
+  const rows = db.prepare('SELECT * FROM achievements ORDER BY year DESC, id DESC').all();
+  res.json(rows);
+});
+
+app.post('/api/achievements', authRequired, adminOnly, (req, res) => {
+  const { title, description, year } = req.body || {};
+  if (!title || !title.trim()) return res.status(400).json({ error: 'Judul achievement wajib diisi' });
+  const info = db.prepare(`
+    INSERT INTO achievements (title, description, year) VALUES (?, ?, ?)
+  `).run(title.trim(), description || null, year || null);
+  res.status(201).json({ id: info.lastInsertRowid, message: 'Achievement ditambahkan' });
+});
+
+app.put('/api/achievements/:id', authRequired, adminOnly, (req, res) => {
+  const { id } = req.params;
+  const { title, description, year } = req.body || {};
+  const existing = db.prepare('SELECT id FROM achievements WHERE id = ?').get(id);
+  if (!existing) return res.status(404).json({ error: 'Achievement tidak ditemukan' });
+  if (!title || !title.trim()) return res.status(400).json({ error: 'Judul achievement wajib diisi' });
+  db.prepare(`
+    UPDATE achievements SET title = ?, description = ?, year = ? WHERE id = ?
+  `).run(title.trim(), description || null, year || null, id);
+  res.json({ message: 'Achievement diperbarui' });
+});
+
+app.delete('/api/achievements/:id', authRequired, adminOnly, (req, res) => {
+  const info = db.prepare('DELETE FROM achievements WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Achievement tidak ditemukan' });
+  res.json({ message: 'Achievement dihapus' });
 });
 
 // ---------- TEKS HALAMAN (home, team, about) ----------

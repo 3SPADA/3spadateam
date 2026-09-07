@@ -12,6 +12,12 @@ const db = new Database(DB_PATH);
 // (misal hapus user otomatis ikut hapus data absen & statistiknya).
 db.pragma('foreign_keys = ON');
 
+// Cek APAKAH tabel users sudah ada SEBELUM schema.sql dijalankan — penting buat
+// migrasi di bawah, supaya tahu database ini baru sama sekali atau sudah pernah jalan.
+const usersExistedBefore = !!db.prepare(
+  "SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
+).get();
+
 const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 db.exec(schema);
 
@@ -29,9 +35,16 @@ if (!userColumns.includes('rank_tier')) {
 // --- Migrasi: tambah role 'community' ke CHECK constraint tabel users.
 // SQLite tidak bisa ALTER CHECK constraint langsung, jadi tabelnya di-rebuild:
 // rename ke users_old -> buat users baru dengan constraint terbaru -> pindahin semua data -> hapus users_old.
-// Aman buat data yang sudah ada (cuma constraint-nya yang berubah, bukan datanya).
+// PENTING: INSERT-nya pakai daftar nama kolom eksplisit di kedua sisi (bukan SELECT *),
+// supaya nilainya dipindah berdasarkan NAMA kolom, bukan berdasarkan URUTAN posisi kolom.
+// (Versi awal migrasi ini sempat pakai "INSERT INTO users SELECT * FROM users_old" tanpa
+// nama kolom eksplisit — itu BUG: kalau urutan kolom di tabel lama beda dari tabel baru,
+// nilainya kepasang ke kolom yang salah. Makanya ada langkah PERBAIKAN di bawah buat
+// database yang sempat kena migrasi versi lama itu.)
 const usersTableDef = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'").get();
-if (usersTableDef && !usersTableDef.sql.includes("'community'")) {
+const hadCommunityBefore = usersTableDef && usersTableDef.sql.includes("'community'");
+
+if (!hadCommunityBefore) {
   db.pragma('foreign_keys = OFF');
   const migrate = db.transaction(() => {
     db.exec(`
@@ -50,12 +63,35 @@ if (usersTableDef && !usersTableDef.sql.includes("'community'")) {
         joined_at TEXT DEFAULT (date('now')),
         created_at TEXT DEFAULT (datetime('now'))
       );
-      INSERT INTO users SELECT * FROM users_old;
+      INSERT INTO users (id, username, password_hash, full_name, role, game_role, age, rank_tier, ign, photo_url, joined_at, created_at)
+      SELECT id, username, password_hash, full_name, role, game_role, age, rank_tier, ign, photo_url, joined_at, created_at
+      FROM users_old;
       DROP TABLE users_old;
     `);
   });
   migrate();
   db.pragma('foreign_keys = ON');
+  // Baru dibuat lewat jalur yang benar (nama kolom eksplisit) — tandai sudah "bersih",
+  // supaya langkah perbaikan di bawah tidak dijalankan buat database ini.
+  db.pragma('user_version = 1');
+} else if (!usersExistedBefore) {
+  // Tabel users baru dibuat PERTAMA KALI di proses ini (lewat schema.sql yang sudah
+  // include community dari awal) — belum pernah kena migrasi apa pun, jadi aman.
+  db.pragma('user_version = 1');
+} else if (db.pragma('user_version', { simple: true }) < 1) {
+  // Database ini sudah pernah lewat migrasi 'community' versi BUGGY (dari kode lama),
+  // sebelum ada tanda "user_version = 1". Kolom age/rank_tier/ign/photo_url/joined_at/created_at
+  // kemungkinan besar ke-geser ke kolom yang salah. Kembalikan ke tempat yang benar, SEKALI SAJA.
+  db.exec(`
+    UPDATE users SET
+      ign        = age,
+      photo_url  = rank_tier,
+      joined_at  = ign,
+      created_at = photo_url,
+      age        = joined_at,
+      rank_tier  = created_at
+  `);
+  db.pragma('user_version = 1');
 }
 
 // --- Migrasi kecil: kalau tabel match_stats masih pakai struktur lama
@@ -143,6 +179,13 @@ if (sponsorCount === 0) {
   insertSponsor.run('ARENAFUEL', 'Minuman Energi');
   insertSponsor.run('GEARLOKA', 'Peripheral Gaming');
   insertSponsor.run('KEDAI KOPI SAMBAS', 'Bootcamp Partner');
+}
+
+const achievementCount = db.prepare('SELECT COUNT(*) AS c FROM achievements').get().c;
+if (achievementCount === 0) {
+  const insertAch = db.prepare('INSERT INTO achievements (title, description, year) VALUES (?, ?, ?)');
+  insertAch.run('8 Besar IEL Regional Kalimantan', 'Pencapaian tertinggi tim sejauh ini di turnamen resmi.', '2024');
+  insertAch.run('Juara 2 NUSA CUP Community Series', 'Kalah tipis di final lewat adu penalti.', '2025');
 }
 
 module.exports = db;

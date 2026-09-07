@@ -51,4 +51,24 @@ function renderPlayerCard(p) {
     playersBox.innerHTML = '<div style="color:var(--loss); padding:20px;">Gagal memuat roster.</div>';
     staffBox.innerHTML = '<div style="color:var(--loss); padding:20px;">Gagal memuat roster.</div>';
   }
+
+  // ---------- ACHIEVEMENT ----------
+  const achList = document.getElementById('achievement-list');
+  try {
+    const res = await fetch(API_BASE + '/achievements');
+    const achievements = await res.json();
+
+    achList.innerHTML = achievements.length
+      ? achievements.map(a => `
+          <div class="achievement-card">
+            <div class="achievement-year">${escapeHtml(a.year || '-')}</div>
+            <div>
+              <div class="achievement-title">${escapeHtml(a.title)}</div>
+              ${a.description ? `<p class="achievement-desc">${escapeHtml(a.description)}</p>` : ''}
+            </div>
+          </div>`).join('')
+      : '<div class="achievement-card"><div style="color:var(--muted)">Belum ada achievement yang dicatat.</div></div>';
+  } catch (err) {
+    achList.innerHTML = '<div class="achievement-card"><div style="color:var(--loss)">Gagal memuat achievement.</div></div>';
+  }
 })();

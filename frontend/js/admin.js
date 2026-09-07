@@ -33,6 +33,8 @@ if (adminRoot) {
       document.getElementById('match-cancel-btn').addEventListener('click', exitMatchEditMode);
       document.getElementById('sponsor-form').addEventListener('submit', handleSponsorSubmit);
       document.getElementById('sponsor-cancel-btn').addEventListener('click', exitSponsorEditMode);
+      document.getElementById('ach-form').addEventListener('submit', handleAchSubmit);
+      document.getElementById('ach-cancel-btn').addEventListener('click', exitAchEditMode);
       document.getElementById('content-form').addEventListener('submit', handleContentSubmit);
       document.getElementById('att-form').addEventListener('submit', handleAttSubmit);
       document.getElementById('att-cancel-btn').addEventListener('click', exitAttEditMode);
@@ -43,6 +45,7 @@ if (adminRoot) {
       await loadEvents();
       await loadMatches();
       await loadSponsors();
+      await loadAchievements();
       await loadContent();
       await loadAccounts(_adminAuthHeaders);
       await loadAttendanceAdmin();
@@ -448,7 +451,13 @@ async function loadAccounts(authHeaders) {
       <tr>
         <td>${escapeHtml(r.full_name)}</td>
         <td>${escapeHtml(r.username)}</td>
-        <td>${r.role === 'staff' ? 'Staff' : (r.role === 'community' ? 'Komunitas' : 'Player')}</td>
+        <td>
+          <select class="role-select" data-id="${r.id}" data-name="${escapeHtml(r.full_name)}" style="background:var(--ink); border:1px solid var(--line); color:var(--paper); padding:6px 10px; font-family:'IBM Plex Sans', sans-serif; font-size:13px;">
+            <option value="community" ${r.role === 'community' ? 'selected' : ''}>Komunitas</option>
+            <option value="player" ${r.role === 'player' ? 'selected' : ''}>Player</option>
+            <option value="staff" ${r.role === 'staff' ? 'selected' : ''}>Staff</option>
+          </select>
+        </td>
         <td>${escapeHtml(r.game_role || '-')}</td>
         <td>${escapeHtml(r.rank || '-')}</td>
         <td>${r.age || '-'}</td>
@@ -456,11 +465,42 @@ async function loadAccounts(authHeaders) {
       </tr>
     `).join('');
 
+    tbody.querySelectorAll('.role-select').forEach(select => {
+      select.dataset.previousValue = select.value;
+      select.addEventListener('change', () => handleRoleChange(select, authHeaders));
+    });
     tbody.querySelectorAll('.row-action.delete').forEach(btn => {
       btn.addEventListener('click', () => handleAccountDelete(btn.dataset.id, btn.dataset.name, authHeaders));
     });
   } catch (err) {
     tbody.innerHTML = '<tr><td colspan="7" style="color:var(--loss)">Gagal memuat data.</td></tr>';
+  }
+}
+
+async function handleRoleChange(select, authHeaders) {
+  const { id, name } = select.dataset;
+  const newRole = select.value;
+  const roleLabel = { community: 'Komunitas', player: 'Player', staff: 'Staff' };
+  const msg = document.getElementById('accounts-msg');
+
+  if (!confirm(`Ubah status "${name}" jadi ${roleLabel[newRole]}?`)) {
+    select.value = select.dataset.previousValue;
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/users/${id}/role`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ role: newRole })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal mengubah status akun');
+    showMsg(msg, `Status "${name}" diubah jadi ${roleLabel[newRole]}.`, 'success');
+    select.dataset.previousValue = newRole;
+  } catch (err) {
+    showMsg(msg, err.message, 'error');
+    select.value = select.dataset.previousValue;
   }
 }
 
@@ -621,6 +661,110 @@ async function handleAttDelete(id) {
     showMsg(msg, 'Absensi dihapus.', 'success');
     if (document.getElementById('att-edit-id').value == id) exitAttEditMode();
     await loadAttendanceAdmin();
+  } catch (err) {
+    showMsg(msg, err.message, 'error');
+  }
+}
+
+// ================= ACHIEVEMENT =================
+let _achievementsCache = [];
+
+async function loadAchievements() {
+  const tbody = document.getElementById('ach-body');
+  try {
+    const res = await fetch(API_BASE + '/achievements');
+    const rows = await res.json();
+    _achievementsCache = rows;
+
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--muted)">Belum ada achievement.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${escapeHtml(r.year || '-')}</td>
+        <td>${escapeHtml(r.title)}</td>
+        <td>${escapeHtml(r.description || '-')}</td>
+        <td>
+          <button type="button" class="row-action edit" data-id="${r.id}">Edit</button>
+          <button type="button" class="row-action delete" data-id="${r.id}">Hapus</button>
+        </td>
+      </tr>
+    `).join('');
+
+    tbody.querySelectorAll('.row-action.edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = _achievementsCache.find(r => String(r.id) === btn.dataset.id);
+        if (row) enterAchEditMode(row);
+      });
+    });
+    tbody.querySelectorAll('.row-action.delete').forEach(btn => {
+      btn.addEventListener('click', () => handleAchDelete(btn.dataset.id));
+    });
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--loss)">Gagal memuat data.</td></tr>';
+  }
+}
+
+async function handleAchSubmit(e) {
+  e.preventDefault();
+  const msg = document.getElementById('ach-form-msg');
+  const editId = document.getElementById('ach-edit-id').value;
+  const body = {
+    title: document.getElementById('ach-title').value.trim(),
+    year: document.getElementById('ach-year').value.trim(),
+    description: document.getElementById('ach-desc').value.trim()
+  };
+  const isEdit = !!editId;
+  const url = isEdit ? `${API_BASE}/achievements/${editId}` : `${API_BASE}/achievements`;
+  const method = isEdit ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', ..._adminAuthHeaders },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal menyimpan achievement');
+    showMsg(msg, isEdit ? 'Achievement diperbarui.' : 'Achievement ditambahkan.', 'success');
+    exitAchEditMode();
+    await loadAchievements();
+  } catch (err) {
+    showMsg(msg, err.message, 'error');
+  }
+}
+
+function enterAchEditMode(row) {
+  document.getElementById('ach-edit-id').value = row.id;
+  document.getElementById('ach-title').value = row.title;
+  document.getElementById('ach-year').value = row.year || '';
+  document.getElementById('ach-desc').value = row.description || '';
+  document.getElementById('ach-form-title').textContent = 'Edit Achievement';
+  document.getElementById('ach-submit-btn').textContent = 'Simpan Perubahan';
+  document.getElementById('ach-cancel-btn').style.display = 'block';
+  document.getElementById('ach-form-msg').textContent = '';
+  document.getElementById('ach-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function exitAchEditMode() {
+  document.getElementById('ach-form').reset();
+  document.getElementById('ach-edit-id').value = '';
+  document.getElementById('ach-form-title').textContent = 'Tambah Achievement Baru';
+  document.getElementById('ach-submit-btn').textContent = 'Simpan Achievement';
+  document.getElementById('ach-cancel-btn').style.display = 'none';
+}
+
+async function handleAchDelete(id) {
+  if (!confirm('Hapus achievement ini?')) return;
+  const msg = document.getElementById('ach-form-msg');
+  try {
+    const res = await fetch(`${API_BASE}/achievements/${id}`, { method: 'DELETE', headers: _adminAuthHeaders });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal menghapus achievement');
+    showMsg(msg, 'Achievement dihapus.', 'success');
+    if (document.getElementById('ach-edit-id').value == id) exitAchEditMode();
+    await loadAchievements();
   } catch (err) {
     showMsg(msg, err.message, 'error');
   }

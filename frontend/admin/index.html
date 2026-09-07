@@ -77,6 +77,7 @@
         <button class="admin-tab active" data-panel="events">Event</button>
         <button class="admin-tab" data-panel="matches">Hasil Pertandingan</button>
         <button class="admin-tab" data-panel="sponsors">Sponsor</button>
+        <button class="admin-tab" data-panel="achievements">Achievement</button>
         <button class="admin-tab" data-panel="content">Teks Halaman</button>
         <button class="admin-tab" data-panel="accounts">Kelola Akun</button>
         <button class="admin-tab" data-panel="attendance">Kelola Absensi</button>
@@ -184,6 +185,39 @@
           <table class="stat-table">
             <thead><tr><th>Nama</th><th>Kategori</th><th>Aksi</th></tr></thead>
             <tbody id="sponsor-body"><tr><td colspan="3" style="color:var(--muted)">Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== PANEL ACHIEVEMENT ===== -->
+      <div class="admin-panel" id="panel-achievements">
+        <div class="dash-card" style="max-width:640px; margin-bottom:32px;">
+          <h3 id="ach-form-title" style="margin-bottom:14px;">Tambah Achievement Baru</h3>
+          <form id="ach-form">
+            <input type="hidden" id="ach-edit-id" value="">
+            <div class="field">
+              <label for="ach-title">Judul</label>
+              <input type="text" id="ach-title" placeholder="Contoh: Juara 2 IEL Season 4" required>
+            </div>
+            <div class="field">
+              <label for="ach-year">Tahun</label>
+              <input type="text" id="ach-year" placeholder="Contoh: 2025">
+            </div>
+            <div class="field">
+              <label for="ach-desc">Deskripsi (opsional)</label>
+              <textarea id="ach-desc" rows="2" style="width:100%; background:var(--ink); border:1px solid var(--line); color:var(--paper); padding:12px 14px; font-family:'IBM Plex Sans', sans-serif; font-size:15px; resize:vertical;"></textarea>
+            </div>
+            <button type="submit" class="btn-primary" id="ach-submit-btn">Simpan Achievement</button>
+            <button type="button" class="btn-primary" id="ach-cancel-btn" style="display:none; background:var(--ink-3); color:var(--paper); border:1px solid var(--line); margin-top:10px;">Batal Edit</button>
+            <div class="form-msg" id="ach-form-msg"></div>
+          </form>
+        </div>
+
+        <div class="dash-card">
+          <h3>Daftar Achievement</h3>
+          <table class="stat-table">
+            <thead><tr><th>Tahun</th><th>Judul</th><th>Deskripsi</th><th>Aksi</th></tr></thead>
+            <tbody id="ach-body"><tr><td colspan="4" style="color:var(--muted)">Memuat...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -361,7 +395,7 @@
           <p style="font-size:13px; margin-bottom:16px;">Hapus akun di sini kalau ada yang keluar dari tim. Data absen dan statistik pertandingan akun itu ikut terhapus otomatis. Akun admin tidak bisa dihapus dari sini.</p>
           <div class="form-msg" id="accounts-msg"></div>
           <table class="stat-table">
-            <thead><tr><th>Nama</th><th>Username</th><th>Status</th><th>Role</th><th>Rank</th><th>Usia</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Nama</th><th>Username</th><th>Ubah Status</th><th>Role</th><th>Rank</th><th>Usia</th><th>Aksi</th></tr></thead>
             <tbody id="accounts-body"><tr><td colspan="7" style="color:var(--muted)">Memuat...</td></tr></tbody>
           </table>
         </div>
