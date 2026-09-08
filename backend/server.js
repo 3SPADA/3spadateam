@@ -778,6 +778,19 @@ app.post('/api/admin/promote', promoteLimiter, (req, res) => {
   res.json({ message: `${username} sekarang jadi admin` });
 });
 
+// ---------- FALLBACK: pastikan SEMUA error/404 balik dalam bentuk JSON, bukan HTML ----------
+// Tanpa ini, kalau ada endpoint typo/salah alamat atau error yang nggak ketangkep,
+// Express bawaan bakal balikin halaman HTML ("<!DOCTYPE ...") yang bikin frontend
+// gagal parse JSON dan error-nya jadi susah dibaca ("Unexpected token '<'").
+app.use((req, res) => {
+  res.status(404).json({ error: 'Endpoint tidak ditemukan: ' + req.method + ' ' + req.path });
+});
+
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Terjadi kesalahan di server. Coba lagi, atau cek log server kalau berulang.' });
+});
+
 app.listen(PORT, () => {
   console.log(`3SPADA API jalan di http://localhost:${PORT}`);
 });
