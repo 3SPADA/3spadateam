@@ -123,6 +123,29 @@ nav.menu a.cta-link:hover{ border-color:var(--blade); color:var(--blade); }
 }
 .hero-cta:hover{ transform:translateY(-2px); }
 
+/* ---------- HERO MARQUEE (strip fixture card auto-scroll, terinspirasi fixtured.com) ---------- */
+.hero-marquee-wrap{
+  margin-top:64px; overflow:hidden; position:relative;
+  -webkit-mask-image:linear-gradient(90deg, transparent, black 6%, black 94%, transparent);
+  mask-image:linear-gradient(90deg, transparent, black 6%, black 94%, transparent);
+}
+.hero-marquee-track{
+  display:flex; gap:14px; width:max-content;
+  animation:hero-marquee-scroll 34s linear infinite;
+}
+.hero-marquee-track:hover{ animation-play-state:paused; }
+.hero-marquee-track .fixture-card{ width:200px; }
+@keyframes hero-marquee-scroll{
+  from{ transform:translateX(0); }
+  to{ transform:translateX(-50%); }
+}
+@media (prefers-reduced-motion:reduce){
+  .hero-marquee-track{ animation:none; overflow-x:auto; }
+}
+@media (max-width:640px){
+  .hero-marquee-track .fixture-card{ width:170px; }
+}
+
 .stat-row{
   display:grid; grid-template-columns:repeat(4,1fr);
   gap:1px; background:var(--line);
@@ -322,6 +345,55 @@ nav.menu a.cta-link:hover{ border-color:var(--blade); color:var(--blade); }
   border-color:var(--blade); color:var(--paper); background:var(--ink-3);
 }
 .radio-pill input[type="radio"]:focus-visible ~ label{ outline:2px solid var(--blade); outline-offset:2px; }
+
+/* ---------- FIXTURE CARD (gaya kalender pertandingan, scroll horizontal) ---------- */
+.fixture-scroll{
+  display:flex; gap:14px; overflow-x:auto; padding-bottom:12px; margin-top:8px;
+  scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin; scrollbar-color:var(--line) transparent;
+}
+.fixture-scroll::-webkit-scrollbar{ height:6px; }
+.fixture-scroll::-webkit-scrollbar-thumb{ background:var(--line); }
+.fixture-scroll::-webkit-scrollbar-thumb:hover{ background:var(--blade); }
+
+.fixture-card{
+  flex:none; scroll-snap-align:start; width:260px;
+  background:var(--ink-2); border:1px solid var(--line); padding:20px;
+  clip-path:polygon(var(--cut-sm) 0,100% 0,100% calc(100% - var(--cut-sm)),calc(100% - var(--cut-sm)) 100%,0 100%,0 var(--cut-sm));
+  transition:border-color .2s ease, transform .2s ease;
+}
+.fixture-card:hover{ border-color:var(--blade); transform:translateY(-3px); }
+
+.fixture-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:8px; }
+.fixture-pill{
+  font-family:'IBM Plex Mono', monospace; font-size:11px; padding:4px 10px;
+  border-radius:999px; white-space:nowrap;
+}
+.fixture-pill.date{ background:var(--ink-3); color:var(--muted); border:1px solid var(--line); }
+.fixture-pill.tag{ background:rgba(255,46,77,0.12); color:var(--blade); border:1px solid var(--blade-dim); }
+.fixture-pill.win{ background:rgba(51,193,122,0.12); color:var(--win); border:1px solid var(--win); }
+.fixture-pill.loss{ background:rgba(255,84,104,0.12); color:var(--loss); border:1px solid var(--loss); }
+
+.fixture-teams{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.fixture-team{ display:flex; flex-direction:column; align-items:center; gap:8px; flex:1; min-width:0; }
+.team-avatar{
+  width:40px; height:40px; border-radius:50%; flex:none;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:15px; color:#0b0b0e;
+}
+.fixture-team span{
+  font-size:12px; text-align:center; color:var(--paper); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
+}
+.fixture-score{
+  font-family:'IBM Plex Mono', monospace; font-size:20px; font-weight:600; color:var(--paper); flex:none;
+}
+
+.event-fixture-name{ font-size:15px; font-weight:600; margin-bottom:6px; line-height:1.3; }
+.event-fixture-loc{ font-size:12px; color:var(--muted); }
+
+@media (max-width:640px){
+  .fixture-card{ width:220px; }
+}
 
 /* ---------- ACHIEVEMENT ---------- */
 .achievement-list{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }

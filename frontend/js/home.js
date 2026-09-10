@@ -3,13 +3,64 @@
 
 const MONTH_SHORT_UPPER = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGU','SEP','OKT','NOV','DES'];
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const FIXTURE_AVATAR_COLORS = ['#ff2e4d', '#4a5568', '#33c17a', '#c9a227', '#6c7686', '#8a5cf6', '#2b9fd6'];
 
 function parseDateParts(isoDate) {
   const [y, m, d] = isoDate.split('-').map(Number);
   return { day: String(d).padStart(2, '0'), month: m - 1, year: y };
 }
 
+function fixtureInitials(name) {
+  const parts = name.trim().split(/\s+/);
+  return (parts.length >= 2 ? parts[0][0] + parts[1][0] : name.slice(0, 2)).toUpperCase();
+}
+
+function fixtureAvatarColor(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  return FIXTURE_AVATAR_COLORS[Math.abs(hash) % FIXTURE_AVATAR_COLORS.length];
+}
+
+function buildEventFixtureCard(ev) {
+  const { day, month, year } = parseDateParts(ev.event_date);
+  return `
+    <div class="fixture-card">
+      <div class="fixture-top">
+        <span class="fixture-pill date">${day} ${MONTH_SHORT_UPPER[month]} ${year}</span>
+        ${ev.tag ? `<span class="fixture-pill tag">${escapeHtml(ev.tag)}</span>` : ''}
+      </div>
+      <div class="event-fixture-name">${escapeHtml(ev.name)}</div>
+      <div class="event-fixture-loc">${escapeHtml(ev.location || '')}</div>
+    </div>`;
+}
+
+function buildMatchFixtureCard(m) {
+  const { day, month, year } = parseDateParts(m.match_date);
+  const isWin = m.result === 'menang';
+  return `
+    <div class="fixture-card">
+      <div class="fixture-top">
+        <span class="fixture-pill date">${day} ${MONTH_SHORT[month]} ${year}</span>
+        <span class="fixture-pill ${isWin ? 'win' : 'loss'}">${isWin ? 'MENANG' : 'KALAH'}</span>
+      </div>
+      <div class="fixture-teams">
+        <div class="fixture-team">
+          <div class="team-avatar" style="background:var(--blade);">3S</div>
+          <span>3SPADA</span>
+        </div>
+        <div class="fixture-score">${escapeHtml(m.score)}</div>
+        <div class="fixture-team">
+          <div class="team-avatar" style="background:${fixtureAvatarColor(m.opponent)};">${escapeHtml(fixtureInitials(m.opponent))}</div>
+          <span>${escapeHtml(m.opponent)}</span>
+        </div>
+      </div>
+    </div>`;
+}
+
 (async () => {
+  let eventsCache = [];
+  let matchesCache = [];
+
   // ---------- SPONSOR ----------
   try {
     const res = await fetch(API_BASE + '/sponsors');
@@ -28,49 +79,41 @@ function parseDateParts(isoDate) {
     console.error('Gagal memuat sponsor:', err);
   }
 
-  // ---------- EVENT ----------
+  // ---------- EVENT (gaya fixture card, scroll horizontal) ----------
   try {
     const res = await fetch(API_BASE + '/events');
-    const events = await res.json();
+    eventsCache = await res.json();
     const list = document.getElementById('event-list');
-    if (events.length === 0) {
-      list.innerHTML = '<div class="event-row"><div style="color:var(--muted)">Belum ada agenda.</div></div>';
-    } else {
-      list.innerHTML = events.map(ev => {
-        const { day, month, year } = parseDateParts(ev.event_date);
-        return `
-          <div class="event-row">
-            <div class="event-date">${day} ${MONTH_SHORT_UPPER[month]}<br>${year}</div>
-            <div><div class="event-name">${escapeHtml(ev.name)}</div><div class="event-loc">${escapeHtml(ev.location || '')}</div></div>
-            <div class="event-tag">${escapeHtml(ev.tag || '')}</div>
-          </div>`;
-      }).join('');
-    }
+    list.innerHTML = eventsCache.length
+      ? eventsCache.map(buildEventFixtureCard).join('')
+      : '<div class="fixture-card"><div style="color:var(--muted)">Belum ada agenda.</div></div>';
   } catch (err) {
     console.error('Gagal memuat event:', err);
   }
 
-  // ---------- HASIL MATCH ----------
+  // ---------- HASIL MATCH (gaya fixture card: 3SPADA vs lawan) ----------
   try {
     const res = await fetch(API_BASE + '/matches');
-    const matches = await res.json();
+    matchesCache = await res.json();
     const grid = document.getElementById('match-grid');
-    if (matches.length === 0) {
-      grid.innerHTML = '<div class="match-card"><div style="color:var(--muted)">Belum ada hasil pertandingan.</div></div>';
-    } else {
-      grid.innerHTML = matches.map(m => {
-        const { day, month, year } = parseDateParts(m.match_date);
-        const badgeClass = m.result === 'menang' ? 'win' : 'loss';
-        const badgeText = m.result === 'menang' ? 'MENANG' : 'KALAH';
-        return `
-          <div class="match-card">
-            <div><div class="match-opp">vs ${escapeHtml(m.opponent)}</div><div class="match-date">${day} ${MONTH_SHORT[month]} ${year}</div></div>
-            <div style="display:flex;align-items:center;gap:16px;"><span class="match-score">${escapeHtml(m.score)}</span><span class="badge ${badgeClass}">${badgeText}</span></div>
-          </div>`;
-      }).join('');
-    }
+    grid.innerHTML = matchesCache.length
+      ? matchesCache.map(buildMatchFixtureCard).join('')
+      : '<div class="fixture-card"><div style="color:var(--muted)">Belum ada hasil pertandingan.</div></div>';
   } catch (err) {
     console.error('Gagal memuat hasil match:', err);
+  }
+
+  // ---------- MARQUEE DI HERO (gabungan event + match, auto-scroll) ----------
+  // Terinspirasi dari fixtured.com: strip kartu jadwal yang jalan otomatis di hero.
+  const marquee = document.getElementById('hero-marquee');
+  if (marquee) {
+    const combined = [...matchesCache.map(buildMatchFixtureCard), ...eventsCache.map(buildEventFixtureCard)];
+    if (combined.length === 0) {
+      marquee.style.display = 'none';
+    } else {
+      // Digandakan dua kali biar animasi scroll-nya keliatan nyambung terus (looping mulus)
+      marquee.innerHTML = combined.join('') + combined.join('');
+    }
   }
 
   // ---------- TOP ARRANCAR (leaderboard publik) ----------
